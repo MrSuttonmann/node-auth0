@@ -1,5 +1,5 @@
 {
-  "name": "auth0",
+  "name": "auth0-cloudflare-compat",
   "version": "4.3.1",
   "description": "SDK for Auth0 API v2",
   "main": "dist/cjs/index.js",
@@ -34,7 +34,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/auth0/node-auth0"
+    "url": "https://github.com/MrSuttonmann/node-auth0"
   },
   "engines": {
     "node": ">=18"
@@ -46,9 +46,9 @@
   "author": "Auth0",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/auth0/node-auth0/issues"
+    "url": "https://github.com/MrSuttonmann/node-auth0/issues"
   },
-  "homepage": "https://github.com/auth0/node-auth0",
+  "homepage": "https://github.com/MrSuttonmann/node-auth0",
   "dependencies": {
     "jose": "^4.13.2",
     "uuid": "^9.0.0"
