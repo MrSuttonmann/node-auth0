@@ -1,4 +1,5 @@
 import { version } from './version.js';
+import { process } from 'node:process';
 
 /**
  * @private
