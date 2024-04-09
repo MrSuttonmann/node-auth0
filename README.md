@@ -7,6 +7,11 @@
 
 📚 [Documentation](#documentation) - 🚀 [Getting Started](#getting-started) - 💻 [API Reference](#api-reference) - 💬 [Feedback](#feedback)
 
+## About this package
+
+This is an _unofficial_ fork of the wonderful Auth0 Node.js SDK, however it removes a dependency on Node.js to enable it to be used in a Cloudflare worker.
+Be aware that this package may not be kept up to date with the official package.
+
 ## Documentation
 
 - [Docs Site](https://auth0.com/docs) - explore our docs site and learn more about Auth0
