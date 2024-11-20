@@ -1,5 +1,123 @@
 # Change Log
 
+## [v4.13.0](https://github.com/auth0/node-auth0/tree/v4.13.0) (2024-11-12)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.12.0...v4.13.0)
+
+**Added**
+
+- CYOK implementation [\#1041](https://github.com/auth0/node-auth0/pull/1041) ([tusharpandey13](https://github.com/tusharpandey13))
+- Feature/forms [\#1055](https://github.com/auth0/node-auth0/pull/1055) ([tusharpandey13](https://github.com/tusharpandey13))
+
+## [v4.12.0](https://github.com/auth0/node-auth0/tree/v4.12.0) (2024-11-07)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.11.0...v4.12.0)
+
+**Fixed**
+
+- org cc/patch1 [\#1053](https://github.com/auth0/node-auth0/pull/1053) ([tusharpandey13](https://github.com/tusharpandey13))
+- parameter name change for Organizations for Client Credentials [\#1052](https://github.com/auth0/node-auth0/pull/1052) ([tusharpandey13](https://github.com/tusharpandey13))
+- Remove IGA trigger from e2e test [DXEX-4601] [\#1048](https://github.com/auth0/node-auth0/pull/1048) ([Widcket](https://github.com/Widcket))
+
+## [v4.11.0](https://github.com/auth0/node-auth0/tree/v4.11.0) (2024-11-05)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.10.0...v4.11.0)
+
+**Added**
+
+- Fixed missing endpoints for feature Organizations for Client Credentials changes [\#1046](https://github.com/auth0/node-auth0/pull/1046) ([tusharpandey13](https://github.com/tusharpandey13))
+- Creating RL workflow for node-auth0 repo [\#1044](https://github.com/auth0/node-auth0/pull/1044) ([arpit-jn](https://github.com/arpit-jn))
+
+## [v4.10.0](https://github.com/auth0/node-auth0/tree/v4.10.0) (2024-09-10)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.9.0...v4.10.0)
+
+**Added**
+
+- Prompt Partial model changes [\#1035](https://github.com/auth0/node-auth0/pull/1035) ([tusharpandey13](https://github.com/tusharpandey13))
+- Add organization support for client credentials to node-auth0 [\#1033](https://github.com/auth0/node-auth0/pull/1033) ([tusharpandey13](https://github.com/tusharpandey13))
+
+## [v4.9.0](https://github.com/auth0/node-auth0/tree/v4.9.0) (2024-08-26)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.8.0...v4.9.0)
+
+**Added**
+
+- Node SDK support for SS-SSO [\#1028](https://github.com/auth0/node-auth0/pull/1028) ([tusharpandey13](https://github.com/tusharpandey13))
+- Update Codecov Action with Token [\#1029](https://github.com/auth0/node-auth0/pull/1029) ([developerkunal](https://github.com/developerkunal))
+
+**Changed**
+
+- Update codeowner file with new GitHub team name [\#1025](https://github.com/auth0/node-auth0/pull/1025) ([stevenwong-okta](https://github.com/stevenwong-okta))
+
+## [v4.8.0](https://github.com/auth0/node-auth0/tree/v4.8.0) (2024-08-02)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.7.0...v4.8.0)
+
+**Added**
+
+- Added support for client, tenant and resource level properties related to HRI [\#1024](https://github.com/auth0/node-auth0/pull/1024) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+- Added support for users getSessions & getRefreshTokens endpoint in management api client [\#1021](https://github.com/auth0/node-auth0/pull/1021) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+- Added support for Session & Refresh token in management api client [\#1019](https://github.com/auth0/node-auth0/pull/1019) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+
+## [v4.7.0](https://github.com/auth0/node-auth0/tree/v4.7.0) (2024-07-08)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.6.0...v4.7.0)
+
+**Added**
+
+- Support SCIM features. [\#1016](https://github.com/auth0/node-auth0/pull/1016) ([nandan-bhat](https://github.com/nandan-bhat))
+
+## [v4.6.0](https://github.com/auth0/node-auth0/tree/v4.6.0) (2024-06-20)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.5.0...v4.6.0)
+
+**Added**
+
+- Added enabled_clients in connection interface [\#1014](https://github.com/auth0/node-auth0/pull/1014) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+
+**Fixed**
+
+- Fixed bugs in the EXAMPLES.md's code snippets [\#994](https://github.com/auth0/node-auth0/pull/994) ([grjan7](https://github.com/grjan7))
+
+**Security**
+
+- Bump braces from 3.0.2 to 3.0.3 [\#1010](https://github.com/auth0/node-auth0/pull/1010) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [v4.5.0](https://github.com/auth0/node-auth0/tree/v4.5.0) (2024-06-14)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.4.1...v4.5.0)
+
+**Changed**
+
+- Support signing up with organization membership. [\#1012](https://github.com/auth0/node-auth0/pull/1012) ([nandan-bhat](https://github.com/nandan-bhat))
+
+**⚠️ BREAKING CHANGES**
+
+- Changes to `ResourceServer` interfaces (`ResourceServerTokenDialectEnum`, `ResourceServerCreateTokenDialectEnum` and `ResourceServerUpdateTokenDialectEnum`). [\#1012](https://github.com/auth0/node-auth0/pull/1012) ([nandan-bhat](https://github.com/nandan-bhat))
+  - The key `token` is changed to `access_token`.
+  - The key `token_authz` is changed to `access_token_authz`.
+
+## [v4.4.1](https://github.com/auth0/node-auth0/tree/v4.4.1) (2024-06-11)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.4.0...v4.4.1)
+
+**Fixed**
+
+- fix: Fixed undici-types error by updating the dependecy [\#1008](https://github.com/auth0/node-auth0/pull/1008) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+
+## [v4.4.0](https://github.com/auth0/node-auth0/tree/v4.4.0) (2024-05-07)
+
+[Full Changelog](https://github.com/auth0/node-auth0/compare/v4.3.1...v4.4.0)
+
+**Added**
+
+- Added new values of token_dialect in management api generated section [\#1003](https://github.com/auth0/node-auth0/pull/1003) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+- Added changes to support mTLS authentication [\#1002](https://github.com/auth0/node-auth0/pull/1002) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+- Added additional request parameter to support PAR with JAR requests [\#995](https://github.com/auth0/node-auth0/pull/995) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+- Added new authorization_details parameter to support RAR requests [\#997](https://github.com/auth0/node-auth0/pull/997) ([gyaneshgouraw-okta](https://github.com/gyaneshgouraw-okta))
+- Bump jose from 4.14.4 to 4.15.5 [\#993](https://github.com/auth0/node-auth0/pull/993) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v4.3.1](https://github.com/auth0/node-auth0/tree/v4.3.1) (2024-02-09)
 
 [Full Changelog](https://github.com/auth0/node-auth0/compare/v4.3.0...v4.3.1)

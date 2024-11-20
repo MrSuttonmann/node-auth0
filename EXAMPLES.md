@@ -6,6 +6,7 @@
   - [Use Refresh Tokens](#use-refresh-tokens)
   - [Complete the Authorization Code flow with PKCE](#complete-the-authorization-code-flow-with-pkce)
   - [Login with Passwordless](#login-with-passwordless)
+  - [mTLS request](#mtls-request)
 - [Management Client](#management-client)
   - [Paginate through a list of users](#paginate-through-a-list-of-users)
   - [Paginate through a list of logs using checkpoint pagination](#paginate-through-a-list-of-logs-using-checkpoint-pagination)
@@ -28,7 +29,7 @@ const auth = new AuthenticationClient({
   clientSecret: '{YOUR_CLIENT_SECRET}',
 });
 const { data: user } = await auth.database.signUp({
-  user: '{USER_EMAIL}',
+  email: '{USER_EMAIL}',
   password: '{USER_PASSWORD}',
   connection: 'Username-Password-Authentication',
 });
@@ -129,6 +130,28 @@ const { data: tokens } = await auth.passwordless.loginWithEmail({
 });
 ```
 
+### mTLS request
+
+Refer mTLS documentation for more info - [Link](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authenticate-with-mtls)
+
+```js
+import { AuthenticationClient } from 'auth0';
+const { Agent } = require('undici');
+
+const auth = new AuthenticationClient({
+  domain: '{YOUR_TENANT_AND REGION}.auth0.com',
+  clientId: '{YOUR_CLIENT_ID}',
+  agent: new Agent({
+    connect: { cert: 'your_cert', key: 'your_key' },
+  }),
+  useMTLS: true,
+});
+
+const { data: tokens } = await auth.oauth.clientCredentialsGrant({
+  audience: 'you-api',
+});
+```
+
 ## Management Client
 
 ### Paginate through a list of users
@@ -158,7 +181,7 @@ while (true) {
 }
 ```
 
-> Note: The maximum number of users you can get with this endpoint is 1000. For more use `users.exportUsers`.
+> Note: The maximum number of users you can get with this endpoint is 1000. For more, use `users.exportUsers`.
 
 ### Paginate through a list of logs using checkpoint pagination
 
@@ -174,7 +197,7 @@ const management = new ManagementClient({
 const allLogs = [];
 let from = '';
 while (true) {
-  const { data: logs } = await mgmntClient.logs.getAll({ from });
+  const { data: logs } = await management.logs.getAll({ from });
   if (!logs.length) {
     break;
   }
@@ -248,7 +271,7 @@ const management = new ManagementClient({
   clientSecret: '{YOUR_CLIENT_SECRET}',
   headers: { 'foo': 'applied to all requests' },
   agent: new https.Agent({ ... }),
-  httpTimeout: 5000
+  timeoutDuration: 5000
 });
 
 await management.users.get({ id: '{user id}' }, { headers: { 'bar': 'applied to this request' } });

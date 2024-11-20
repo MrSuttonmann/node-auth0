@@ -8,6 +8,8 @@ import type {
   GetInvitations200Response,
   GetInvitations200ResponseOneOfInner,
   GetMembers200Response,
+  GetOrganizationClientGrants200Response,
+  GetOrganizationClientGrants200ResponseOneOfInner,
   GetOrganizationMemberRoles200Response,
   GetOrganizations200Response,
   GetOrganizations200ResponseOneOfInner,
@@ -16,6 +18,7 @@ import type {
   PostEnabledConnectionsRequest,
   PostInvitationsRequest,
   PostMembersRequest,
+  PostOrganizationClientGrantsRequest,
   PostOrganizationMemberRolesRequest,
   PostOrganizations201Response,
   PostOrganizationsRequest,
@@ -23,9 +26,11 @@ import type {
   GetInvitations200ResponseOneOf,
   GetMembers200ResponseOneOf,
   GetMembers200ResponseOneOfInner,
+  GetOrganizationClientGrants200ResponseOneOf,
   GetOrganizationMemberRoles200ResponseOneOf,
   GetOrganizationMemberRoles200ResponseOneOfInner,
   GetOrganizations200ResponseOneOf,
+  DeleteClientGrantsByGrantIdRequest,
   DeleteEnabledConnectionsByConnectionIdRequest,
   DeleteInvitationsByInvitationIdRequest,
   DeleteMembersOperationRequest,
@@ -37,6 +42,7 @@ import type {
   GetInvitationsByInvitationIdRequest,
   GetMembersRequest,
   GetNameByNameRequest,
+  GetOrganizationClientGrantsRequest,
   GetOrganizationMemberRolesRequest,
   GetOrganizationsRequest,
   GetOrganizationsByIdRequest,
@@ -45,6 +51,7 @@ import type {
   PostEnabledConnectionsOperationRequest,
   PostInvitationsOperationRequest,
   PostMembersOperationRequest,
+  PostOrganizationClientGrantsOperationRequest,
   PostOrganizationMemberRolesOperationRequest,
 } from '../models/index.js';
 
@@ -54,6 +61,30 @@ const { BaseAPI } = runtime;
  *
  */
 export class OrganizationsManager extends BaseAPI {
+  /**
+   * Remove a client grant from an organization
+   *
+   * @throws {RequiredError}
+   */
+  async deleteClientGrantsByGrantId(
+    requestParameters: DeleteClientGrantsByGrantIdRequest,
+    initOverrides?: InitOverride
+  ): Promise<ApiResponse<void>> {
+    runtime.validateRequiredRequestParams(requestParameters, ['id', 'grant_id']);
+
+    const response = await this.request(
+      {
+        path: `/organizations/{id}/client-grants/{grant_id}`
+          .replace('{id}', encodeURIComponent(String(requestParameters.id)))
+          .replace('{grant_id}', encodeURIComponent(String(requestParameters.grant_id))),
+        method: 'DELETE',
+      },
+      initOverrides
+    );
+
+    return runtime.VoidApiResponse.fromResponse(response);
+  }
+
   /**
    * Delete connections from an organization
    *
@@ -484,6 +515,70 @@ export class OrganizationsManager extends BaseAPI {
   }
 
   /**
+   * Get client grants associated to an organization
+   *
+   * @throws {RequiredError}
+   */
+  async getOrganizationClientGrants(
+    requestParameters: GetOrganizationClientGrantsRequest & { include_totals: true },
+    initOverrides?: InitOverride
+  ): Promise<ApiResponse<GetOrganizationClientGrants200ResponseOneOf>>;
+  async getOrganizationClientGrants(
+    requestParameters?: GetOrganizationClientGrantsRequest,
+    initOverrides?: InitOverride
+  ): Promise<ApiResponse<Array<GetOrganizationClientGrants200ResponseOneOfInner>>>;
+  async getOrganizationClientGrants(
+    requestParameters: GetOrganizationClientGrantsRequest,
+    initOverrides?: InitOverride
+  ): Promise<ApiResponse<GetOrganizationClientGrants200Response>> {
+    runtime.validateRequiredRequestParams(requestParameters, ['id']);
+
+    const queryParameters = runtime.applyQueryParams(requestParameters, [
+      {
+        key: 'audience',
+        config: {},
+      },
+      {
+        key: 'client_id',
+        config: {},
+      },
+      {
+        key: 'grant_ids',
+        config: {
+          isArray: true,
+          isCollectionFormatMulti: true,
+        },
+      },
+      {
+        key: 'page',
+        config: {},
+      },
+      {
+        key: 'per_page',
+        config: {},
+      },
+      {
+        key: 'include_totals',
+        config: {},
+      },
+    ]);
+
+    const response = await this.request(
+      {
+        path: `/organizations/{id}/client-grants`.replace(
+          '{id}',
+          encodeURIComponent(String(requestParameters.id))
+        ),
+        method: 'GET',
+        query: queryParameters,
+      },
+      initOverrides
+    );
+
+    return runtime.JSONApiResponse.fromResponse(response);
+  }
+
+  /**
    * Get the roles assigned to an organization member
    *
    * @throws {RequiredError}
@@ -789,6 +884,38 @@ export class OrganizationsManager extends BaseAPI {
     );
 
     return runtime.VoidApiResponse.fromResponse(response);
+  }
+
+  /**
+   * Associate a client grant with an organization
+   *
+   * @throws {RequiredError}
+   */
+  async postOrganizationClientGrants(
+    requestParameters: PostOrganizationClientGrantsOperationRequest,
+    bodyParameters: PostOrganizationClientGrantsRequest,
+    initOverrides?: InitOverride
+  ): Promise<ApiResponse<GetOrganizationClientGrants200ResponseOneOfInner>> {
+    runtime.validateRequiredRequestParams(requestParameters, ['id']);
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    const response = await this.request(
+      {
+        path: `/organizations/{id}/client-grants`.replace(
+          '{id}',
+          encodeURIComponent(String(requestParameters.id))
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        body: bodyParameters,
+      },
+      initOverrides
+    );
+
+    return runtime.JSONApiResponse.fromResponse(response);
   }
 
   /**

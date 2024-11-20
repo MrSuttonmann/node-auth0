@@ -175,10 +175,13 @@ export interface Client {
   initiate_login_uri: string;
   /**
    */
-  native_social_login: ClientNativeSocialLogin | null;
+  native_social_login: any | null;
   /**
    */
   refresh_token: ClientRefreshToken | null;
+  /**
+   */
+  default_organization: ClientDefaultOrganization | null;
   /**
    * Defines how to proceed during an authentication transaction with regards an organization. Can be `deny` (default), `allow` or `require`.
    *
@@ -192,6 +195,24 @@ export interface Client {
   /**
    */
   client_authentication_methods: ClientClientAuthenticationMethods | null;
+  /**
+   * Makes the use of Pushed Authorization Requests mandatory for this client
+   *
+   */
+  require_pushed_authorization_requests: boolean;
+  /**
+   * Makes the use of Proof-of-Possession mandatory for this client
+   *
+   */
+  require_proof_of_possession: boolean;
+  /**
+   */
+  signed_request_object: ClientSignedRequestObject;
+  /**
+   * Defines the compliance level for this client, which may restrict it's capabilities
+   *
+   */
+  compliance_level: ClientComplianceLevelEnum;
 }
 
 export const ClientTokenEndpointAuthMethodEnum = {
@@ -217,6 +238,15 @@ export const ClientOrganizationRequireBehaviorEnum = {
 } as const;
 export type ClientOrganizationRequireBehaviorEnum =
   (typeof ClientOrganizationRequireBehaviorEnum)[keyof typeof ClientOrganizationRequireBehaviorEnum];
+
+export const ClientComplianceLevelEnum = {
+  none: 'none',
+  fapi1_adv_pkj_par: 'fapi1_adv_pkj_par',
+  fapi1_adv_mtls_par: 'fapi1_adv_mtls_par',
+  null: 'null',
+} as const;
+export type ClientComplianceLevelEnum =
+  (typeof ClientComplianceLevelEnum)[keyof typeof ClientComplianceLevelEnum];
 
 /**
  * Addons enabled for this client and their associated configurations.
@@ -846,6 +876,12 @@ export interface ClientClientAuthenticationMethods {
   /**
    */
   private_key_jwt: ClientClientAuthenticationMethodsPrivateKeyJwt;
+  /**
+   */
+  tls_client_auth: ClientClientAuthenticationMethodsTlsClientAuth;
+  /**
+   */
+  self_signed_tls_client_auth: ClientClientAuthenticationMethodsSelfSignedTlsClientAuth;
 }
 /**
  * Defines `private_key_jwt` client authentication method. If this property is defined, the client is enabled to use the Private Key JWT authentication method.
@@ -866,6 +902,26 @@ export interface ClientClientAuthenticationMethodsPrivateKeyJwtCredentialsInner 
    *
    */
   id: string;
+}
+/**
+ * Defines `self_signed_tls_client_auth` client authentication method. If the property is defined, the client is configured to use mTLS authentication method utilizing self-signed certificate.
+ */
+export interface ClientClientAuthenticationMethodsSelfSignedTlsClientAuth {
+  /**
+   * A list of unique and previously created credential IDs enabled on the client for mTLS authentication utilizing self-signed certificate.
+   *
+   */
+  credentials: Array<ClientClientAuthenticationMethodsPrivateKeyJwtCredentialsInner>;
+}
+/**
+ * Defines `tls_client_auth` client authentication method. If the property is defined, the client is configured to use CA-based mTLS authentication method.
+ */
+export interface ClientClientAuthenticationMethodsTlsClientAuth {
+  /**
+   * A list of unique and previously created credential IDs enabled on the client for CA-based mTLS authentication.
+   *
+   */
+  credentials: Array<ClientClientAuthenticationMethodsPrivateKeyJwtCredentialsInner>;
 }
 /**
  *
@@ -1025,6 +1081,24 @@ export interface ClientCreate {
   /**
    */
   client_authentication_methods?: ClientCreateClientAuthenticationMethods;
+  /**
+   * Makes the use of Pushed Authorization Requests mandatory for this client
+   *
+   */
+  require_pushed_authorization_requests?: boolean;
+  /**
+   */
+  signed_request_object?: ClientCreateSignedRequestObject;
+  /**
+   * Makes the use of Proof-of-Possession mandatory for this client
+   *
+   */
+  require_proof_of_possession?: boolean;
+  /**
+   * Defines the compliance level for this client, which may restrict it's capabilities
+   *
+   */
+  compliance_level?: ClientCreateComplianceLevelEnum;
 }
 
 export const ClientCreateTokenEndpointAuthMethodEnum = {
@@ -1079,6 +1153,15 @@ export const ClientCreateOrganizationRequireBehaviorEnum = {
 export type ClientCreateOrganizationRequireBehaviorEnum =
   (typeof ClientCreateOrganizationRequireBehaviorEnum)[keyof typeof ClientCreateOrganizationRequireBehaviorEnum];
 
+export const ClientCreateComplianceLevelEnum = {
+  none: 'none',
+  fapi1_adv_pkj_par: 'fapi1_adv_pkj_par',
+  fapi1_adv_mtls_par: 'fapi1_adv_mtls_par',
+  null: 'null',
+} as const;
+export type ClientCreateComplianceLevelEnum =
+  (typeof ClientCreateComplianceLevelEnum)[keyof typeof ClientCreateComplianceLevelEnum];
+
 /**
  * Addons enabled for this client and their associated configurations.
  */
@@ -1094,10 +1177,10 @@ export interface ClientCreateAddons {
   azure_sb?: ClientCreateAddonsAzureSb;
   /**
    */
-  rms?: ClientAddonsRms;
+  rms?: ClientCreateAddonsRms;
   /**
    */
-  mscrm?: ClientAddonsMscrm;
+  mscrm?: ClientCreateAddonsMscrm;
   /**
    */
   slack?: ClientAddonsSlack;
@@ -1363,6 +1446,17 @@ export interface ClientCreateAddonsFirebase {
   lifetime_in_seconds?: number;
 }
 /**
+ * Microsoft Dynamics CRM SSO configuration.
+ */
+export interface ClientCreateAddonsMscrm {
+  [key: string]: any | any;
+  /**
+   * Microsoft Dynamics CRM application URL.
+   *
+   */
+  url: string;
+}
+/**
  * New Relic SSO configuration.
  */
 export interface ClientCreateAddonsNewrelic {
@@ -1388,6 +1482,17 @@ export interface ClientCreateAddonsOffice365 {
    *
    */
   connection?: string;
+}
+/**
+ * Active Directory Rights Management Service SSO configuration.
+ */
+export interface ClientCreateAddonsRms {
+  [key: string]: any | any;
+  /**
+   * URL of your Rights Management Server. It can be internal or external, but users will have to be able to reach it.
+   *
+   */
+  url: string;
 }
 /**
  * Salesforce SSO configuration.
@@ -1639,6 +1744,12 @@ export interface ClientCreateClientAuthenticationMethods {
   /**
    */
   private_key_jwt?: ClientCreateClientAuthenticationMethodsPrivateKeyJwt;
+  /**
+   */
+  tls_client_auth?: ClientCreateClientAuthenticationMethodsTlsClientAuth;
+  /**
+   */
+  self_signed_tls_client_auth?: ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuth;
 }
 /**
  * Defines `private_key_jwt` client authentication method. If this property is defined, the client is enabled to use the Private Key JWT authentication method.
@@ -1700,6 +1811,79 @@ export const ClientCreateClientAuthenticationMethodsPrivateKeyJwtCredentialsInne
 } as const;
 export type ClientCreateClientAuthenticationMethodsPrivateKeyJwtCredentialsInnerAlgEnum =
   (typeof ClientCreateClientAuthenticationMethodsPrivateKeyJwtCredentialsInnerAlgEnum)[keyof typeof ClientCreateClientAuthenticationMethodsPrivateKeyJwtCredentialsInnerAlgEnum];
+
+/**
+ * Defines `self_signed_tls_client_auth` client authentication method. If the property is defined, the client is configured to use mTLS authentication method utilizing self-signed certificate.
+ */
+export interface ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuth {
+  /**
+   * Fully defined credentials that will be enabled on the client for mTLS authentication utilizing self-signed certificate.
+   *
+   */
+  credentials: Array<ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuthCredentialsInner>;
+}
+/**
+ *
+ */
+export interface ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuthCredentialsInner {
+  /**
+   */
+  credential_type: ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuthCredentialsInnerCredentialTypeEnum;
+  /**
+   */
+  name?: string;
+  /**
+   * PEM-formatted X509 certificate. Must be JSON escaped.
+   *
+   */
+  pem: string;
+}
+
+export const ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuthCredentialsInnerCredentialTypeEnum =
+  {
+    x509_cert: 'x509_cert',
+  } as const;
+export type ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuthCredentialsInnerCredentialTypeEnum =
+  (typeof ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuthCredentialsInnerCredentialTypeEnum)[keyof typeof ClientCreateClientAuthenticationMethodsSelfSignedTlsClientAuthCredentialsInnerCredentialTypeEnum];
+
+/**
+ * Defines `tls_client_auth` client authentication method. If the property is defined, the client is configured to use CA-based mTLS authentication method.
+ */
+export interface ClientCreateClientAuthenticationMethodsTlsClientAuth {
+  /**
+   * Fully defined credentials that will be enabled on the client for CA-based mTLS authentication.
+   *
+   */
+  credentials: Array<ClientCreateClientAuthenticationMethodsTlsClientAuthCredentialsInner>;
+}
+/**
+ *
+ */
+export interface ClientCreateClientAuthenticationMethodsTlsClientAuthCredentialsInner {
+  /**
+   */
+  credential_type?: ClientCreateClientAuthenticationMethodsTlsClientAuthCredentialsInnerCredentialTypeEnum;
+  /**
+   */
+  name?: string;
+  /**
+   * Subject Distinguished Name. Mutually exclusive with `pem` property.
+   *
+   */
+  subject_dn?: string;
+  /**
+   * PEM-formatted X509 certificate. Must be JSON escaped. Mutually exclusive with `subject_dn` property.
+   *
+   */
+  pem?: string;
+}
+
+export const ClientCreateClientAuthenticationMethodsTlsClientAuthCredentialsInnerCredentialTypeEnum =
+  {
+    cert_subject_dn: 'cert_subject_dn',
+  } as const;
+export type ClientCreateClientAuthenticationMethodsTlsClientAuthCredentialsInnerCredentialTypeEnum =
+  (typeof ClientCreateClientAuthenticationMethodsTlsClientAuthCredentialsInnerCredentialTypeEnum)[keyof typeof ClientCreateClientAuthenticationMethodsTlsClientAuthCredentialsInnerCredentialTypeEnum];
 
 /**
  * Encryption used for WsFed responses with this client.
@@ -1833,6 +2017,41 @@ export interface ClientCreateOidcLogout {
   backchannel_logout_urls: Array<string>;
 }
 /**
+ * JWT-secured Authorization Requests (JAR) settings.
+ */
+export interface ClientCreateSignedRequestObject {
+  /**
+   * Indicates whether the JAR requests are mandatory
+   *
+   */
+  required?: boolean;
+  /**
+   */
+  credentials?: Array<ClientCreateClientAuthenticationMethodsPrivateKeyJwtCredentialsInner>;
+}
+/**
+ * Defines the default Organization ID and flows
+ */
+export interface ClientDefaultOrganization {
+  /**
+   * The default Organization ID to be used
+   *
+   */
+  organization_id: string;
+  /**
+   * The default Organization usage
+   *
+   */
+  flows: Array<ClientDefaultOrganizationFlowsEnum>;
+}
+
+export const ClientDefaultOrganizationFlowsEnum = {
+  client_credentials: 'client_credentials',
+} as const;
+export type ClientDefaultOrganizationFlowsEnum =
+  (typeof ClientDefaultOrganizationFlowsEnum)[keyof typeof ClientDefaultOrganizationFlowsEnum];
+
+/**
  * Encryption used for WsFed responses with this client.
  */
 export interface ClientEncryptionKey {
@@ -1877,7 +2096,26 @@ export interface ClientGrant {
    *
    */
   scope: Array<string>;
+  /**
+   * Defines whether organizations can be used with client credentials exchanges for this grant.
+   *
+   */
+  organization_usage: ClientGrantOrganizationUsageEnum;
+  /**
+   * If enabled, any organization can be used with this grant. If disabled (default), the grant must be explicitly assigned to the desired organizations.
+   *
+   */
+  allow_any_organization: boolean;
 }
+
+export const ClientGrantOrganizationUsageEnum = {
+  deny: 'deny',
+  allow: 'allow',
+  require: 'require',
+} as const;
+export type ClientGrantOrganizationUsageEnum =
+  (typeof ClientGrantOrganizationUsageEnum)[keyof typeof ClientGrantOrganizationUsageEnum];
+
 /**
  *
  */
@@ -1893,11 +2131,30 @@ export interface ClientGrantCreate {
    */
   audience: string;
   /**
+   * Defines whether organizations can be used with client credentials exchanges for this grant.
+   *
+   */
+  organization_usage?: ClientGrantCreateOrganizationUsageEnum;
+  /**
+   * If enabled, any organization can be used with this grant. If disabled (default), the grant must be explicitly assigned to the desired organizations.
+   *
+   */
+  allow_any_organization?: boolean;
+  /**
    * Scopes allowed for this client grant.
    *
    */
   scope: Array<string>;
 }
+
+export const ClientGrantCreateOrganizationUsageEnum = {
+  deny: 'deny',
+  allow: 'allow',
+  require: 'require',
+} as const;
+export type ClientGrantCreateOrganizationUsageEnum =
+  (typeof ClientGrantCreateOrganizationUsageEnum)[keyof typeof ClientGrantCreateOrganizationUsageEnum];
+
 /**
  * Configuration related to JWTs for the client.
  */
@@ -1978,37 +2235,6 @@ export interface ClientMobileIos {
   app_bundle_identifier: string;
 }
 /**
- * Configure native social settings
- */
-export interface ClientNativeSocialLogin {
-  /**
-   */
-  apple: ClientNativeSocialLoginApple | null;
-  /**
-   */
-  facebook: ClientNativeSocialLoginFacebook | null;
-}
-/**
- * Native Social Login support for the Apple connection
- */
-export interface ClientNativeSocialLoginApple {
-  /**
-   * Determine whether or not to allow signing in natively using an Apple authorization code
-   *
-   */
-  enabled: boolean;
-}
-/**
- * Native Social Login support for the Facebook connection
- */
-export interface ClientNativeSocialLoginFacebook {
-  /**
-   * Determine whether or not to allow signing in natively using Facebook
-   *
-   */
-  enabled: boolean;
-}
-/**
  * Configuration for OIDC backchannel logout
  */
 export interface ClientOidcLogout {
@@ -2018,7 +2244,46 @@ export interface ClientOidcLogout {
    *
    */
   backchannel_logout_urls: Array<string>;
+  /**
+   */
+  backchannel_logout_initiators: ClientOidcLogoutBackchannelLogoutInitiators;
 }
+/**
+ * Configuration for OIDC backchannel logout initiators
+ */
+export interface ClientOidcLogoutBackchannelLogoutInitiators {
+  [key: string]: any | any;
+  /**
+   * The `mode` property determines the configuration method for enabling initiators. `custom` enables only the initiators listed in the selected_initiators array, `all` enables all current and future initiators.
+   *
+   */
+  mode: ClientOidcLogoutBackchannelLogoutInitiatorsModeEnum;
+  /**
+   */
+  selected_initiators: Array<ClientOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum>;
+}
+
+export const ClientOidcLogoutBackchannelLogoutInitiatorsModeEnum = {
+  custom: 'custom',
+  all: 'all',
+} as const;
+export type ClientOidcLogoutBackchannelLogoutInitiatorsModeEnum =
+  (typeof ClientOidcLogoutBackchannelLogoutInitiatorsModeEnum)[keyof typeof ClientOidcLogoutBackchannelLogoutInitiatorsModeEnum];
+
+export const ClientOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum = {
+  rp_logout: 'rp-logout',
+  idp_logout: 'idp-logout',
+  password_changed: 'password-changed',
+  session_expired: 'session-expired',
+  session_revoked: 'session-revoked',
+  account_deleted: 'account-deleted',
+  email_identifier_changed: 'email-identifier-changed',
+  mfa_phone_unenrolled: 'mfa-phone-unenrolled',
+  account_deactivated: 'account-deactivated',
+} as const;
+export type ClientOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum =
+  (typeof ClientOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum)[keyof typeof ClientOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum];
+
 /**
  * Refresh token configuration
  */
@@ -2074,6 +2339,19 @@ export const ClientRefreshTokenExpirationTypeEnum = {
 export type ClientRefreshTokenExpirationTypeEnum =
   (typeof ClientRefreshTokenExpirationTypeEnum)[keyof typeof ClientRefreshTokenExpirationTypeEnum];
 
+/**
+ * JWT-secured Authorization Requests (JAR) settings.
+ */
+export interface ClientSignedRequestObject {
+  /**
+   * Indicates whether the JAR requests are mandatory
+   *
+   */
+  required: boolean;
+  /**
+   */
+  credentials: Array<ClientClientAuthenticationMethodsPrivateKeyJwtCredentialsInner>;
+}
 /**
  *
  */
@@ -2239,10 +2517,13 @@ export interface ClientUpdate {
   initiate_login_uri?: string;
   /**
    */
-  native_social_login?: ClientCreateNativeSocialLogin | null;
+  native_social_login?: ClientUpdateNativeSocialLogin | null;
   /**
    */
   refresh_token?: ClientRefreshToken | null;
+  /**
+   */
+  default_organization?: ClientDefaultOrganization | null;
   /**
    * Defines how to proceed during an authentication transaction with regards an organization. Can be `deny` (default), `allow` or `require`.
    *
@@ -2256,6 +2537,24 @@ export interface ClientUpdate {
   /**
    */
   client_authentication_methods?: ClientUpdateClientAuthenticationMethods | null;
+  /**
+   * Makes the use of Pushed Authorization Requests mandatory for this client
+   *
+   */
+  require_pushed_authorization_requests?: boolean;
+  /**
+   * Makes the use of Proof-of-Possession mandatory for this client
+   *
+   */
+  require_proof_of_possession?: boolean;
+  /**
+   */
+  signed_request_object?: ClientUpdateSignedRequestObject | null;
+  /**
+   * Defines the compliance level for this client, which may restrict it's capabilities
+   *
+   */
+  compliance_level?: ClientUpdateComplianceLevelEnum;
 }
 
 export const ClientUpdateTokenEndpointAuthMethodEnum = {
@@ -2310,6 +2609,15 @@ export const ClientUpdateOrganizationRequireBehaviorEnum = {
 } as const;
 export type ClientUpdateOrganizationRequireBehaviorEnum =
   (typeof ClientUpdateOrganizationRequireBehaviorEnum)[keyof typeof ClientUpdateOrganizationRequireBehaviorEnum];
+
+export const ClientUpdateComplianceLevelEnum = {
+  none: 'none',
+  fapi1_adv_pkj_par: 'fapi1_adv_pkj_par',
+  fapi1_adv_mtls_par: 'fapi1_adv_mtls_par',
+  null: 'null',
+} as const;
+export type ClientUpdateComplianceLevelEnum =
+  (typeof ClientUpdateComplianceLevelEnum)[keyof typeof ClientUpdateComplianceLevelEnum];
 
 /**
  * Addons enabled for this client and their associated configurations.
@@ -2373,7 +2681,7 @@ export interface ClientUpdateAddons {
   office365?: ClientCreateAddonsOffice365;
   /**
    */
-  salesforce?: ClientCreateAddonsSalesforce;
+  salesforce?: ClientUpdateAddonsSalesforce;
   /**
    */
   salesforce_api?: ClientCreateAddonsSalesforceApi;
@@ -2388,7 +2696,7 @@ export interface ClientUpdateAddons {
   layer?: ClientAddonsLayer;
   /**
    */
-  sap_api?: ClientCreateAddonsSapApi;
+  sap_api?: ClientUpdateAddonsSapApi;
   /**
    */
   sharepoint?: ClientCreateAddonsSharepoint;
@@ -2419,12 +2727,65 @@ export interface ClientUpdateAddons {
   oag?: object | null;
 }
 /**
+ * Salesforce SSO configuration.
+ */
+export interface ClientUpdateAddonsSalesforce {
+  [key: string]: any | any;
+  /**
+   * Arbitrary logical URL that identifies the Saleforce resource. e.g. `https://acme-org.com`.
+   *
+   */
+  entity_id?: string;
+}
+/**
+ * SAP API addon configuration.
+ */
+export interface ClientUpdateAddonsSapApi {
+  [key: string]: any | any;
+  /**
+   * If activated in the OAuth 2.0 client configuration (transaction SOAUTH2) the SAML attribute client_id must be set and equal the client_id form parameter of the access token request.
+   *
+   */
+  clientid?: string;
+  /**
+   * Name of the property in the user object that maps to a SAP username. e.g. `email`.
+   *
+   */
+  usernameAttribute?: string;
+  /**
+   * Your SAP OData server OAuth2 token endpoint URL.
+   *
+   */
+  tokenEndpointUrl?: string;
+  /**
+   * Requested scope for SAP APIs.
+   *
+   */
+  scope?: string;
+  /**
+   * Service account password to use to authenticate API calls to the token endpoint.
+   *
+   */
+  servicePassword?: string;
+  /**
+   * NameID element of the Subject which can be used to express the user's identity. Defaults to `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`.
+   *
+   */
+  nameIdentifierFormat?: string;
+}
+/**
  * Defines client authentication methods.
  */
 export interface ClientUpdateClientAuthenticationMethods {
   /**
    */
   private_key_jwt?: ClientClientAuthenticationMethodsPrivateKeyJwt;
+  /**
+   */
+  tls_client_auth?: ClientClientAuthenticationMethodsTlsClientAuth;
+  /**
+   */
+  self_signed_tls_client_auth?: ClientClientAuthenticationMethodsSelfSignedTlsClientAuth;
 }
 /**
  * The client's encryption key
@@ -2515,6 +2876,30 @@ export interface ClientUpdateMobileIos {
   app_bundle_identifier?: string;
 }
 /**
+ * Configure native social settings
+ */
+export interface ClientUpdateNativeSocialLogin {
+  /**
+   */
+  apple?: ClientCreateNativeSocialLoginApple | null;
+  /**
+   */
+  facebook?: ClientCreateNativeSocialLoginFacebook | null;
+  /**
+   */
+  google?: ClientUpdateNativeSocialLoginGoogle | null;
+}
+/**
+ * Native Social Login support for the google-oauth2 connection
+ */
+export interface ClientUpdateNativeSocialLoginGoogle {
+  /**
+   * Determine whether or not to allow signing in natively using a Google ID token
+   *
+   */
+  enabled?: boolean;
+}
+/**
  * Configuration for OIDC backchannel logout
  */
 export interface ClientUpdateOidcLogout {
@@ -2523,6 +2908,58 @@ export interface ClientUpdateOidcLogout {
    *
    */
   backchannel_logout_urls?: Array<string>;
+  /**
+   */
+  backchannel_logout_initiators?: ClientUpdateOidcLogoutBackchannelLogoutInitiators;
+}
+/**
+ * Configuration for OIDC backchannel logout initiators
+ */
+export interface ClientUpdateOidcLogoutBackchannelLogoutInitiators {
+  [key: string]: any | any;
+  /**
+   * The `mode` property determines the configuration method for enabling initiators. `custom` enables only the initiators listed in the selected_initiators array, `all` enables all current and future initiators.
+   *
+   */
+  mode: ClientUpdateOidcLogoutBackchannelLogoutInitiatorsModeEnum;
+  /**
+   */
+  selected_initiators?: Array<ClientUpdateOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum>;
+}
+
+export const ClientUpdateOidcLogoutBackchannelLogoutInitiatorsModeEnum = {
+  custom: 'custom',
+  all: 'all',
+} as const;
+export type ClientUpdateOidcLogoutBackchannelLogoutInitiatorsModeEnum =
+  (typeof ClientUpdateOidcLogoutBackchannelLogoutInitiatorsModeEnum)[keyof typeof ClientUpdateOidcLogoutBackchannelLogoutInitiatorsModeEnum];
+
+export const ClientUpdateOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum = {
+  rp_logout: 'rp-logout',
+  idp_logout: 'idp-logout',
+  password_changed: 'password-changed',
+  session_expired: 'session-expired',
+  session_revoked: 'session-revoked',
+  account_deleted: 'account-deleted',
+  email_identifier_changed: 'email-identifier-changed',
+  mfa_phone_unenrolled: 'mfa-phone-unenrolled',
+  account_deactivated: 'account-deactivated',
+} as const;
+export type ClientUpdateOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum =
+  (typeof ClientUpdateOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum)[keyof typeof ClientUpdateOidcLogoutBackchannelLogoutInitiatorsSelectedInitiatorsEnum];
+
+/**
+ * JWT-secured Authorization Requests (JAR) settings.
+ */
+export interface ClientUpdateSignedRequestObject {
+  /**
+   * Indicates whether the JAR requests are mandatory
+   *
+   */
+  required?: boolean;
+  /**
+   */
+  credentials?: Array<ClientClientAuthenticationMethodsPrivateKeyJwtCredentialsInner>;
 }
 /**
  *
@@ -2556,6 +2993,11 @@ export interface Connection {
    *
    */
   realms: Array<string>;
+  /**
+   * The ids of the clients for which the connection is enabled
+   *
+   */
+  enabled_clients: Array<string>;
   /**
    * True if the connection is domain level
    *
@@ -4667,7 +5109,10 @@ export interface GetClientGrants200ResponseOneOf {
 /**
  *
  */
-export type GetClients200Response = Array<Client> | GetClients200ResponseOneOf;
+export type GetClients200Response =
+  | Array<Client>
+  | GetClients200ResponseOneOf
+  | GetClients200ResponseOneOf1;
 /**
  *
  */
@@ -4681,6 +5126,17 @@ export interface GetClients200ResponseOneOf {
   /**
    */
   total: number;
+  /**
+   */
+  clients: Array<Client>;
+}
+/**
+ *
+ */
+export interface GetClients200ResponseOneOf1 {
+  /**
+   */
+  next: string;
   /**
    */
   clients: Array<Client>;
@@ -4737,6 +5193,16 @@ export interface GetCredentials200ResponseInner {
    */
   credential_type: string;
   /**
+   * The X509 certificate's Subject Distinguished Name
+   *
+   */
+  subject_dn: string;
+  /**
+   * The X509 certificate's SHA256 thumbprint
+   *
+   */
+  thumbprint_sha256: string;
+  /**
    * The ISO 8601 formatted date the credential was created.
    *
    */
@@ -4761,6 +5227,16 @@ export const GetCredentials200ResponseInnerAlgEnum = {
 export type GetCredentials200ResponseInnerAlgEnum =
   (typeof GetCredentials200ResponseInnerAlgEnum)[keyof typeof GetCredentials200ResponseInnerAlgEnum];
 
+/**
+ *
+ */
+export interface GetDefaultMapping200Response {
+  /**
+   * The mapping between auth0 and SCIM
+   *
+   */
+  mapping: Array<GetScimConfiguration200ResponseMappingInner>;
+}
 /**
  *
  */
@@ -4889,29 +5365,18 @@ export interface GetEnabledConnections200ResponseOneOfInner {
    */
   assign_membership_on_login: boolean;
   /**
-   * Enables showing a button for the connection in the organization login page. If false, it will be usable only by HRD.
+   * Determines whether a connection should be displayed on this organization’s login prompt. Only applicable for enterprise connections. Default: true.
    *
    */
   show_as_button: boolean;
   /**
-   */
-  connection: GetEnabledConnections200ResponseOneOfInnerConnection;
-}
-/**
- *
- */
-export interface GetEnabledConnections200ResponseOneOfInnerConnection {
-  [key: string]: any | any;
-  /**
-   * The name of the enabled connection.
+   * Determines whether organization signup should be enabled for this organization connection. Only applicable for database connections. Default: false.
    *
    */
-  name: string;
+  is_signup_enabled: boolean;
   /**
-   * The strategy of the enabled connection.
-   *
    */
-  strategy: string;
+  connection: PostOrganizations201ResponseEnabledConnectionsInnerConnection;
 }
 /**
  *
@@ -5018,6 +5483,280 @@ export interface GetExecution200ResponseResultsInner {
    *
    */
   ended_at: string;
+}
+/**
+ *
+ */
+export type GetFlows200Response = Array<GetFlows200ResponseOneOfInner> | GetFlows200ResponseOneOf;
+/**
+ *
+ */
+export interface GetFlows200ResponseOneOf {
+  /**
+   */
+  start: number;
+  /**
+   */
+  limit: number;
+  /**
+   */
+  total: number;
+  /**
+   */
+  flows: Array<GetFlows200ResponseOneOfInner>;
+}
+/**
+ *
+ */
+export interface GetFlows200ResponseOneOfInner {
+  /**
+   */
+  id: string;
+  /**
+   */
+  name: string;
+  /**
+   */
+  created_at: string;
+  /**
+   */
+  updated_at: string;
+  /**
+   */
+  executed_at?: string;
+}
+/**
+ *
+ */
+export type GetFlowsExecutions200Response =
+  | Array<GetFlowsExecutions200ResponseOneOfInner>
+  | GetFlowsExecutions200ResponseOneOf;
+/**
+ *
+ */
+export interface GetFlowsExecutions200ResponseOneOf {
+  /**
+   */
+  start: number;
+  /**
+   */
+  limit: number;
+  /**
+   */
+  total: number;
+  /**
+   */
+  executions: Array<GetFlowsExecutions200ResponseOneOfInner>;
+}
+/**
+ *
+ */
+export interface GetFlowsExecutions200ResponseOneOfInner {
+  /**
+   * Flow execution identifier
+   *
+   */
+  id: string;
+  /**
+   * Trace id
+   *
+   */
+  trace_id: string;
+  /**
+   * Journey id
+   *
+   */
+  journey_id?: string;
+  /**
+   * Execution status
+   *
+   */
+  status: string;
+  /**
+   * The ISO 8601 formatted date when this flow execution was created.
+   *
+   */
+  created_at: string;
+  /**
+   * The ISO 8601 formatted date when this flow execution was updated.
+   *
+   */
+  updated_at: string;
+  /**
+   * The ISO 8601 formatted date when this flow execution started.
+   *
+   */
+  started_at?: string;
+  /**
+   * The ISO 8601 formatted date when this flow execution ended.
+   *
+   */
+  ended_at?: string;
+}
+/**
+ *
+ */
+export interface GetFlowsExecutionsByExecutionId200Response {
+  /**
+   * Flow execution identifier
+   *
+   */
+  id: string;
+  /**
+   * Trace id
+   *
+   */
+  trace_id: string;
+  /**
+   * Journey id
+   *
+   */
+  journey_id?: string;
+  /**
+   * Execution status
+   *
+   */
+  status: string;
+  /**
+   * Flow execution debug.
+   *
+   */
+  debug?: { [key: string]: any };
+  /**
+   * The ISO 8601 formatted date when this flow execution was created.
+   *
+   */
+  created_at: string;
+  /**
+   * The ISO 8601 formatted date when this flow execution was updated.
+   *
+   */
+  updated_at: string;
+  /**
+   * The ISO 8601 formatted date when this flow execution started.
+   *
+   */
+  started_at?: string;
+  /**
+   * The ISO 8601 formatted date when this flow execution ended.
+   *
+   */
+  ended_at?: string;
+}
+/**
+ *
+ */
+export type GetFlowsVaultConnections200Response =
+  | Array<GetFlowsVaultConnections200ResponseOneOfInner>
+  | GetFlowsVaultConnections200ResponseOneOf;
+/**
+ *
+ */
+export interface GetFlowsVaultConnections200ResponseOneOf {
+  /**
+   */
+  start: number;
+  /**
+   */
+  limit: number;
+  /**
+   */
+  total: number;
+  /**
+   */
+  connections: Array<GetFlowsVaultConnections200ResponseOneOfInner>;
+}
+/**
+ *
+ */
+export interface GetFlowsVaultConnections200ResponseOneOfInner {
+  /**
+   * Flows Vault Connection identifier.
+   *
+   */
+  id: string;
+  /**
+   * Flows Vault Connection app identifier.
+   *
+   */
+  app_id: string;
+  /**
+   * Flows Vault Connection name.
+   *
+   */
+  name: string;
+  /**
+   * Flows Vault Connection custom account name.
+   *
+   */
+  account_name?: string;
+  /**
+   * Whether the Flows Vault Connection is configured.
+   *
+   */
+  ready: boolean;
+  /**
+   * The ISO 8601 formatted date when this Flows Vault Connection was created.
+   *
+   */
+  created_at: string;
+  /**
+   * The ISO 8601 formatted date when this Flows Vault Connection was updated.
+   *
+   */
+  updated_at: string;
+  /**
+   * The ISO 8601 formatted date when this Flows Vault Connection was refreshed.
+   *
+   */
+  refreshed_at?: string;
+  /**
+   */
+  fingerprint: string;
+}
+/**
+ *
+ */
+export type GetForms200Response = Array<GetForms200ResponseOneOfInner> | GetForms200ResponseOneOf;
+/**
+ *
+ */
+export interface GetForms200ResponseOneOf {
+  /**
+   */
+  start: number;
+  /**
+   */
+  limit: number;
+  /**
+   */
+  total: number;
+  /**
+   */
+  forms: Array<GetForms200ResponseOneOfInner>;
+}
+/**
+ *
+ */
+export interface GetForms200ResponseOneOfInner {
+  /**
+   */
+  id: string;
+  /**
+   */
+  name: string;
+  /**
+   */
+  created_at: string;
+  /**
+   */
+  updated_at: string;
+  /**
+   */
+  embedded_at?: string;
+  /**
+   */
+  submitted_at?: string;
 }
 /**
  *
@@ -6050,6 +6789,54 @@ export type GetMessageTypes200ResponseMessageTypesEnum =
 /**
  *
  */
+export type GetOrganizationClientGrants200Response =
+  | Array<GetOrganizationClientGrants200ResponseOneOfInner>
+  | GetOrganizationClientGrants200ResponseOneOf;
+/**
+ *
+ */
+export interface GetOrganizationClientGrants200ResponseOneOf {
+  /**
+   */
+  start: number;
+  /**
+   */
+  limit: number;
+  /**
+   */
+  total: number;
+  /**
+   */
+  client_grants: Array<GetOrganizationClientGrants200ResponseOneOfInner>;
+}
+/**
+ *
+ */
+export interface GetOrganizationClientGrants200ResponseOneOfInner {
+  /**
+   * ID of the client grant.
+   *
+   */
+  id: string;
+  /**
+   * ID of the client.
+   *
+   */
+  client_id: string;
+  /**
+   * The audience (API identifier) of this client grant
+   *
+   */
+  audience: string;
+  /**
+   * Scopes allowed for this client grant.
+   *
+   */
+  scope: Array<string>;
+}
+/**
+ *
+ */
 export type GetOrganizationMemberRoles200Response =
   | Array<GetOrganizationMemberRoles200ResponseOneOfInner>
   | GetOrganizationMemberRoles200ResponseOneOf;
@@ -6270,6 +7057,151 @@ export type GetPnProviders200ResponseProviderEnum =
 /**
  *
  */
+export interface GetRefreshToken200Response {
+  [key: string]: any | any;
+  /**
+   * The ID of the refresh token
+   *
+   */
+  id: string;
+  /**
+   * ID of the user which can be used when interacting with other APIs.
+   *
+   */
+  user_id: string;
+  /**
+   */
+  created_at: GetRefreshToken200ResponseCreatedAt | null;
+  /**
+   */
+  idle_expires_at: GetRefreshToken200ResponseIdleExpiresAt | null;
+  /**
+   */
+  expires_at: GetRefreshToken200ResponseExpiresAt | null;
+  /**
+   * ID of the client application granted with this refresh token
+   *
+   */
+  client_id: string;
+  /**
+   * ID of the authenticated session used to obtain this refresh-token
+   *
+   */
+  session_id: string | null;
+  /**
+   * True if the token is a rotating refresh token
+   *
+   */
+  rotating: boolean;
+  /**
+   * A list of the resource server IDs associated to this refresh-token and their granted scopes
+   *
+   */
+  resource_servers: Array<GetRefreshToken200ResponseResourceServersInner>;
+}
+/**
+ *
+ */
+export type GetRefreshToken200ResponseCreatedAt = string | { [key: string]: any };
+/**
+ *
+ */
+export type GetRefreshToken200ResponseExpiresAt = string | { [key: string]: any };
+/**
+ *
+ */
+export type GetRefreshToken200ResponseIdleExpiresAt = string | { [key: string]: any };
+/**
+ *
+ */
+export interface GetRefreshToken200ResponseResourceServersInner {
+  [key: string]: any | any;
+  /**
+   * Resource server ID
+   *
+   */
+  audience: string;
+  /**
+   * List of scopes for the refresh token
+   *
+   */
+  scopes: string;
+}
+/**
+ *
+ */
+export interface GetRefreshTokensForUser200Response {
+  [key: string]: any | any;
+  /**
+   */
+  sessions: Array<GetRefreshTokensForUser200ResponseSessionsInner>;
+}
+/**
+ *
+ */
+export interface GetRefreshTokensForUser200ResponseSessionsInner {
+  [key: string]: any | any;
+  /**
+   * The ID of the refresh token
+   *
+   */
+  id: string;
+  /**
+   * ID of the user which can be used when interacting with other APIs.
+   *
+   */
+  user_id: string;
+  /**
+   */
+  created_at: GetRefreshTokensForUser200ResponseSessionsInnerCreatedAt;
+  /**
+   */
+  idle_expires_at: GetRefreshTokensForUser200ResponseSessionsInnerIdleExpiresAt;
+  /**
+   */
+  expires_at: GetRefreshTokensForUser200ResponseSessionsInnerExpiresAt;
+  /**
+   * ID of the client application granted with this refresh token
+   *
+   */
+  client_id: string;
+  /**
+   * ID of the authenticated session used to obtain this refresh-token
+   *
+   */
+  session_id: string;
+  /**
+   * True if the token is a rotating refresh token
+   *
+   */
+  rotating: boolean;
+  /**
+   * A list of the resource server IDs associated to this refresh-token and their granted scopes
+   *
+   */
+  resource_servers: Array<GetRefreshToken200ResponseResourceServersInner>;
+}
+/**
+ *
+ */
+export type GetRefreshTokensForUser200ResponseSessionsInnerCreatedAt =
+  | string
+  | { [key: string]: any };
+/**
+ *
+ */
+export type GetRefreshTokensForUser200ResponseSessionsInnerExpiresAt =
+  | string
+  | { [key: string]: any };
+/**
+ *
+ */
+export type GetRefreshTokensForUser200ResponseSessionsInnerIdleExpiresAt =
+  | string
+  | { [key: string]: any };
+/**
+ *
+ */
 export type GetResourceServers200Response =
   | Array<ResourceServer>
   | GetResourceServers200ResponseOneOf;
@@ -6403,6 +7335,380 @@ export interface GetRulesConfigs200ResponseInner {
    */
   key: string;
 }
+/**
+ *
+ */
+export interface GetScimConfiguration200Response {
+  /**
+   * The connection's identifier
+   *
+   */
+  connection_id: string;
+  /**
+   * The connection's identifier
+   *
+   */
+  connection_name: string;
+  /**
+   * The connection's strategy
+   *
+   */
+  strategy: string;
+  /**
+   * The tenant's name
+   *
+   */
+  tenant_name: string;
+  /**
+   * User ID attribute for generating unique user ids
+   *
+   */
+  user_id_attribute: string;
+  /**
+   * The mapping between auth0 and SCIM
+   *
+   */
+  mapping: Array<GetScimConfiguration200ResponseMappingInner>;
+  /**
+   * The Date Time Scim Configuration was created
+   *
+   */
+  created_at: string;
+  /**
+   * The Date Time Scim Configuration was last updated
+   *
+   */
+  updated_on: string;
+}
+/**
+ *
+ */
+export interface GetScimConfiguration200ResponseMappingInner {
+  [key: string]: any | any;
+  /**
+   * The field location in the auth0 schema
+   *
+   */
+  auth0: string;
+  /**
+   * The field location in the SCIM schema
+   *
+   */
+  scim: string;
+}
+/**
+ *
+ */
+export interface GetScimTokens200ResponseInner {
+  [key: string]: any | any;
+  /**
+   * The token's identifier
+   *
+   */
+  token_id: string;
+  /**
+   * The scopes of the scim token
+   *
+   */
+  scopes: Array<string>;
+  /**
+   * The token's created at timestamp
+   *
+   */
+  created_at: string;
+  /**
+   * The token's valid until timestamp
+   *
+   */
+  valid_until: string;
+  /**
+   * The token's last used at timestamp
+   *
+   */
+  last_used_at: string;
+}
+/**
+ *
+ */
+export interface GetSession200Response {
+  [key: string]: any | any;
+  /**
+   * The ID of the session
+   *
+   */
+  id: string;
+  /**
+   * ID of the user which can be used when interacting with other APIs.
+   *
+   */
+  user_id: string;
+  /**
+   */
+  created_at: GetSession200ResponseCreatedAt | null;
+  /**
+   */
+  updated_at: GetSession200ResponseUpdatedAt | null;
+  /**
+   */
+  authenticated_at: GetSession200ResponseAuthenticatedAt | null;
+  /**
+   */
+  idle_expires_at: GetSession200ResponseIdleExpiresAt | null;
+  /**
+   */
+  expires_at: GetSession200ResponseExpiresAt | null;
+  /**
+   */
+  device: GetSession200ResponseDevice;
+  /**
+   * List of client details for the session
+   *
+   */
+  clients: Array<GetSession200ResponseClientsInner>;
+  /**
+   */
+  authentication: GetSession200ResponseAuthentication;
+}
+/**
+ *
+ */
+export type GetSession200ResponseAuthenticatedAt = string | { [key: string]: any };
+/**
+ * Details about authentication signals obtained during the login flow
+ */
+export interface GetSession200ResponseAuthentication {
+  [key: string]: any | any;
+  /**
+   * Contains the authentication methods a user has completed during their session
+   *
+   */
+  methods: Array<GetSession200ResponseAuthenticationMethodsInner>;
+}
+/**
+ * Authentication signal details
+ */
+export interface GetSession200ResponseAuthenticationMethodsInner {
+  [key: string]: any | any;
+  /**
+   * One of: "federated", "passkey", "pwd", "sms", "email", "mfa", "mock" or a custom method denoted by a URL
+   *
+   */
+  name: string;
+  /**
+   */
+  timestamp: GetSession200ResponseAuthenticationMethodsInnerTimestamp | null;
+  /**
+   * A specific MFA factor. Only present when "name" is set to "mfa"
+   *
+   */
+  type$: string;
+}
+/**
+ *
+ */
+export type GetSession200ResponseAuthenticationMethodsInnerTimestamp =
+  | string
+  | { [key: string]: any };
+/**
+ * Client details
+ */
+export interface GetSession200ResponseClientsInner {
+  [key: string]: any | any;
+  /**
+   * ID of client for the session
+   *
+   */
+  client_id: string;
+}
+/**
+ *
+ */
+export type GetSession200ResponseCreatedAt = string | { [key: string]: any };
+/**
+ * Metadata related to the device used in the session
+ */
+export interface GetSession200ResponseDevice {
+  [key: string]: any | any;
+  /**
+   * First IP address associated with this session
+   *
+   */
+  initial_ip: string | null;
+  /**
+   * First autonomous system number associated with this session
+   *
+   */
+  initial_asn: string;
+  /**
+   * Last user agent of the device from which this user logged in
+   *
+   */
+  last_user_agent: string;
+  /**
+   * Last IP address from which this user logged in
+   *
+   */
+  last_ip: string | null;
+  /**
+   * Last autonomous system number from which this user logged in
+   *
+   */
+  last_asn: string;
+}
+/**
+ *
+ */
+export type GetSession200ResponseExpiresAt = string | { [key: string]: any };
+/**
+ *
+ */
+export type GetSession200ResponseIdleExpiresAt = string | { [key: string]: any };
+/**
+ *
+ */
+export type GetSession200ResponseUpdatedAt = string | { [key: string]: any };
+/**
+ *
+ */
+export interface GetSessionsForUser200Response {
+  [key: string]: any | any;
+  /**
+   */
+  sessions: Array<GetSessionsForUser200ResponseSessionsInner>;
+}
+/**
+ *
+ */
+export interface GetSessionsForUser200ResponseSessionsInner {
+  [key: string]: any | any;
+  /**
+   * The ID of the session
+   *
+   */
+  id: string;
+  /**
+   * ID of the user which can be used when interacting with other APIs.
+   *
+   */
+  user_id: string;
+  /**
+   */
+  created_at: GetSessionsForUser200ResponseSessionsInnerCreatedAt;
+  /**
+   */
+  updated_at: GetSessionsForUser200ResponseSessionsInnerUpdatedAt;
+  /**
+   */
+  authenticated_at: GetSessionsForUser200ResponseSessionsInnerAuthenticatedAt;
+  /**
+   */
+  idle_expires_at: GetSessionsForUser200ResponseSessionsInnerIdleExpiresAt;
+  /**
+   */
+  expires_at: GetSessionsForUser200ResponseSessionsInnerExpiresAt;
+  /**
+   */
+  device: GetSessionsForUser200ResponseSessionsInnerDevice;
+  /**
+   * List of client details for the session
+   *
+   */
+  clients: Array<GetSession200ResponseClientsInner>;
+  /**
+   */
+  authentication: GetSessionsForUser200ResponseSessionsInnerAuthentication;
+}
+/**
+ *
+ */
+export type GetSessionsForUser200ResponseSessionsInnerAuthenticatedAt =
+  | string
+  | { [key: string]: any };
+/**
+ * Details about authentication signals obtained during the login flow
+ */
+export interface GetSessionsForUser200ResponseSessionsInnerAuthentication {
+  [key: string]: any | any;
+  /**
+   * Contains the authentication methods a user has completed during their session
+   *
+   */
+  methods: Array<GetSessionsForUser200ResponseSessionsInnerAuthenticationMethodsInner>;
+}
+/**
+ * Authentication signal details
+ */
+export interface GetSessionsForUser200ResponseSessionsInnerAuthenticationMethodsInner {
+  [key: string]: any | any;
+  /**
+   * One of: "federated", "passkey", "pwd", "sms", "email", "mfa", "mock" or a custom method denoted by a URL
+   *
+   */
+  name: string;
+  /**
+   */
+  timestamp: GetSessionsForUser200ResponseSessionsInnerAuthenticationMethodsInnerTimestamp;
+  /**
+   * A specific MFA factor. Only present when "name" is set to "mfa"
+   *
+   */
+  type$: string;
+}
+/**
+ *
+ */
+export type GetSessionsForUser200ResponseSessionsInnerAuthenticationMethodsInnerTimestamp =
+  | string
+  | { [key: string]: any };
+/**
+ *
+ */
+export type GetSessionsForUser200ResponseSessionsInnerCreatedAt = string | { [key: string]: any };
+/**
+ * Metadata related to the device used in the session
+ */
+export interface GetSessionsForUser200ResponseSessionsInnerDevice {
+  [key: string]: any | any;
+  /**
+   * First IP address associated with this session
+   *
+   */
+  initial_ip: string;
+  /**
+   * First autonomous system number associated with this session
+   *
+   */
+  initial_asn: string;
+  /**
+   * Last user agent of the device from which this user logged in
+   *
+   */
+  last_user_agent: string;
+  /**
+   * Last IP address from which this user logged in
+   *
+   */
+  last_ip: string;
+  /**
+   * Last autonomous system number from which this user logged in
+   *
+   */
+  last_asn: string;
+}
+/**
+ *
+ */
+export type GetSessionsForUser200ResponseSessionsInnerExpiresAt = string | { [key: string]: any };
+/**
+ *
+ */
+export type GetSessionsForUser200ResponseSessionsInnerIdleExpiresAt =
+  | string
+  | { [key: string]: any };
+/**
+ *
+ */
+export type GetSessionsForUser200ResponseSessionsInnerUpdatedAt = string | { [key: string]: any };
 /**
  *
  */
@@ -7425,7 +8731,27 @@ export interface PatchClientGrantsByIdRequest {
    *
    */
   scope?: Array<string>;
+  /**
+   * Controls how organizations may be used with this grant
+   *
+   */
+  organization_usage?: PatchClientGrantsByIdRequestOrganizationUsageEnum;
+  /**
+   * Controls allowing any organization to be used with this grant
+   *
+   */
+  allow_any_organization?: boolean | null;
 }
+
+export const PatchClientGrantsByIdRequestOrganizationUsageEnum = {
+  deny: 'deny',
+  allow: 'allow',
+  require: 'require',
+  null: 'null',
+} as const;
+export type PatchClientGrantsByIdRequestOrganizationUsageEnum =
+  (typeof PatchClientGrantsByIdRequestOrganizationUsageEnum)[keyof typeof PatchClientGrantsByIdRequestOrganizationUsageEnum];
+
 /**
  *
  */
@@ -7546,10 +8872,86 @@ export interface PatchEnabledConnectionsByConnectionIdRequest {
    */
   assign_membership_on_login?: boolean;
   /**
-   * Enables showing a button for the connection in the organization login page. If false, it will be usable only by HRD.
+   * Determines whether organization signup should be enabled for this organization connection. Only applicable for database connections. Default: false.
+   *
+   */
+  is_signup_enabled?: boolean;
+  /**
+   * Determines whether a connection should be displayed on this organization’s login prompt. Only applicable for enterprise connections. Default: true.
    *
    */
   show_as_button?: boolean;
+}
+/**
+ *
+ */
+export interface PatchFlowsByIdRequest {
+  /**
+   */
+  name?: string;
+  /**
+   */
+  actions?: Array<any>;
+}
+/**
+ *
+ */
+export interface PatchFlowsVaultConnectionsByIdRequest {
+  /**
+   * Flows Vault Connection name.
+   *
+   */
+  name?: string;
+  /**
+   */
+  setup?: PatchFlowsVaultConnectionsByIdRequestSetup;
+}
+/**
+ * Flows Vault Connection configuration.
+ */
+export type PatchFlowsVaultConnectionsByIdRequestSetup =
+  | PostFlowsVaultConnectionsRequestAnyOf11Setup
+  | PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOf
+  | PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOf
+  | PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf
+  | PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1
+  | PostFlowsVaultConnectionsRequestAnyOf18Setup
+  | PostFlowsVaultConnectionsRequestAnyOf1Setup
+  | PostFlowsVaultConnectionsRequestAnyOf2Setup
+  | PostFlowsVaultConnectionsRequestAnyOf3Setup
+  | PostFlowsVaultConnectionsRequestAnyOf4Setup
+  | PostFlowsVaultConnectionsRequestAnyOf5Setup
+  | PostFlowsVaultConnectionsRequestAnyOf7Setup
+  | PostFlowsVaultConnectionsRequestAnyOf9Setup
+  | PostFlowsVaultConnectionsRequestAnyOfSetup;
+/**
+ *
+ */
+export interface PatchFormsByIdRequest {
+  /**
+   */
+  name?: string;
+  /**
+   */
+  messages?: PostFormsRequestMessages;
+  /**
+   */
+  languages?: PostFormsRequestLanguages;
+  /**
+   */
+  translations?: { [key: string]: any };
+  /**
+   */
+  nodes?: Array<PostFormsRequestNodesInner>;
+  /**
+   */
+  start?: PostFormsRequestStart;
+  /**
+   */
+  ending?: PostFormsRequestEnding;
+  /**
+   */
+  style?: PostFormsRequestStyle;
 }
 /**
  *
@@ -7721,6 +9123,21 @@ export interface PatchOrganizationsByIdRequestBranding {
   /**
    */
   colors?: GetOrganizations200ResponseOneOfInnerBrandingColors;
+}
+/**
+ *
+ */
+export interface PatchScimConfigurationRequest {
+  /**
+   * User ID attribute for generating unique user ids
+   *
+   */
+  user_id_attribute: string;
+  /**
+   * The mapping between auth0 and SCIM
+   *
+   */
+  mapping: Array<PostScimConfigurationRequestMappingInner>;
 }
 /**
  *
@@ -8801,10 +10218,2100 @@ export interface PostEnabledConnectionsRequest {
    */
   assign_membership_on_login?: boolean;
   /**
-   * Enables showing a button for the connection in the organization login page. If false, it will be usable only by HRD.
+   * Determines whether organization signup should be enabled for this organization connection. Only applicable for database connections. Default: false.
+   *
+   */
+  is_signup_enabled?: boolean;
+  /**
+   * Determines whether a connection should be displayed on this organization’s login prompt. Only applicable for enterprise connections. Default: true.
    *
    */
   show_as_button?: boolean;
+}
+/**
+ *
+ */
+export interface PostFlows201Response {
+  /**
+   */
+  id: string;
+  /**
+   */
+  name: string;
+  /**
+   */
+  actions?: Array<any>;
+  /**
+   */
+  created_at: string;
+  /**
+   */
+  updated_at: string;
+  /**
+   */
+  executed_at?: string;
+}
+/**
+ *
+ */
+export interface PostFlowsRequest {
+  /**
+   */
+  name: string;
+  /**
+   */
+  actions?: Array<any>;
+}
+/**
+ *
+ */
+export interface PostFlowsVaultConnections201Response {
+  /**
+   * Flows Vault Connection identifier.
+   *
+   */
+  id: string;
+  /**
+   * Flows Vault Connection app identifier.
+   *
+   */
+  app_id: string;
+  /**
+   * Flows Vault Connection environment.
+   *
+   */
+  environment?: string;
+  /**
+   * Flows Vault Connection name.
+   *
+   */
+  name: string;
+  /**
+   * Flows Vault Connection custom account name.
+   *
+   */
+  account_name?: string;
+  /**
+   * Whether the Flows Vault Connection is configured.
+   *
+   */
+  ready: boolean;
+  /**
+   * The ISO 8601 formatted date when this Flows Vault Connection was created.
+   *
+   */
+  created_at: string;
+  /**
+   * The ISO 8601 formatted date when this Flows Vault Connection was updated.
+   *
+   */
+  updated_at: string;
+  /**
+   * The ISO 8601 formatted date when this Flows Vault Connection was refreshed.
+   *
+   */
+  refreshed_at?: string;
+  /**
+   */
+  fingerprint: string;
+}
+/**
+ *
+ */
+export type PostFlowsVaultConnectionsRequest =
+  | PostFlowsVaultConnectionsRequestAnyOf
+  | PostFlowsVaultConnectionsRequestAnyOf1
+  | PostFlowsVaultConnectionsRequestAnyOf10
+  | PostFlowsVaultConnectionsRequestAnyOf11
+  | PostFlowsVaultConnectionsRequestAnyOf12
+  | PostFlowsVaultConnectionsRequestAnyOf13
+  | PostFlowsVaultConnectionsRequestAnyOf14
+  | PostFlowsVaultConnectionsRequestAnyOf15
+  | PostFlowsVaultConnectionsRequestAnyOf16
+  | PostFlowsVaultConnectionsRequestAnyOf17
+  | PostFlowsVaultConnectionsRequestAnyOf18
+  | PostFlowsVaultConnectionsRequestAnyOf19
+  | PostFlowsVaultConnectionsRequestAnyOf2
+  | PostFlowsVaultConnectionsRequestAnyOf20
+  | PostFlowsVaultConnectionsRequestAnyOf3
+  | PostFlowsVaultConnectionsRequestAnyOf4
+  | PostFlowsVaultConnectionsRequestAnyOf5
+  | PostFlowsVaultConnectionsRequestAnyOf6
+  | PostFlowsVaultConnectionsRequestAnyOf7
+  | PostFlowsVaultConnectionsRequestAnyOf8
+  | PostFlowsVaultConnectionsRequestAnyOf9;
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOfAppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOfSetup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOfAppIdEnum = {
+  ACTIVECAMPAIGN: 'ACTIVECAMPAIGN',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOfAppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOfAppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOfAppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf1 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf1AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf1Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf1AppIdEnum = {
+  AIRTABLE: 'AIRTABLE',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf1AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf1AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf1AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf10 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf10AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf10Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf10AppIdEnum = {
+  MAILCHIMP: 'MAILCHIMP',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf10AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf10AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf10AppIdEnum];
+
+/**
+ *
+ */
+export type PostFlowsVaultConnectionsRequestAnyOf10Setup =
+  | PostFlowsVaultConnectionsRequestAnyOf4Setup
+  | PostFlowsVaultConnectionsRequestAnyOf5Setup;
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf11 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf11AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf11Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf11AppIdEnum = {
+  MAILJET: 'MAILJET',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf11AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf11AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf11AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf11Setup {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf11SetupTypeEnum;
+  /**
+   */
+  api_key: string;
+  /**
+   */
+  secret_key: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf11SetupTypeEnum = {
+  API_KEY: 'API_KEY',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf11SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf11SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf11SetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf12 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf12AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf12Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf12AppIdEnum = {
+  PIPEDRIVE: 'PIPEDRIVE',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf12AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf12AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf12AppIdEnum];
+
+/**
+ *
+ */
+export type PostFlowsVaultConnectionsRequestAnyOf12Setup =
+  | PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOf
+  | PostFlowsVaultConnectionsRequestAnyOf5Setup;
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOf {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOfTypeEnum;
+  /**
+   */
+  token: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOfTypeEnum = {
+  TOKEN: 'TOKEN',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOfTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOfTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOfTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf13 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf13AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf5Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf13AppIdEnum = {
+  SALESFORCE: 'SALESFORCE',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf13AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf13AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf13AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf14 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf14AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf1Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf14AppIdEnum = {
+  SENDGRID: 'SENDGRID',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf14AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf14AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf14AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf15 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf15AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf15Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf15AppIdEnum = {
+  SLACK: 'SLACK',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf15AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf15AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf15AppIdEnum];
+
+/**
+ *
+ */
+export type PostFlowsVaultConnectionsRequestAnyOf15Setup =
+  | PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOf
+  | PostFlowsVaultConnectionsRequestAnyOf5Setup;
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOf {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOfTypeEnum;
+  /**
+   */
+  url: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOfTypeEnum = {
+  WEBHOOK: 'WEBHOOK',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOfTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOfTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOfTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf16 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf16AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf16Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf16AppIdEnum = {
+  STRIPE: 'STRIPE',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf16AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf16AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf16AppIdEnum];
+
+/**
+ *
+ */
+export type PostFlowsVaultConnectionsRequestAnyOf16Setup =
+  | PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf
+  | PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1;
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOfTypeEnum;
+  /**
+   */
+  private_key: string;
+  /**
+   */
+  public_key: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOfTypeEnum = {
+  KEY_PAIR: 'KEY_PAIR',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOfTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOfTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOfTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1 {
+  [key: string]: any | any;
+  /**
+   */
+  type?: PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1TypeEnum;
+  /**
+   */
+  code?: string;
+  /**
+   */
+  environment?: PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1EnvironmentEnum;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1TypeEnum = {
+  OAUTH_CODE: 'OAUTH_CODE',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1TypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1TypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1TypeEnum];
+
+export const PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1EnvironmentEnum = {
+  live: 'live',
+  test: 'test',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1EnvironmentEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1EnvironmentEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf16SetupAnyOf1EnvironmentEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf17 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf17AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOf;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf17AppIdEnum = {
+  TELEGRAM: 'TELEGRAM',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf17AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf17AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf17AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf18 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf18AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf18Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf18AppIdEnum = {
+  TWILIO: 'TWILIO',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf18AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf18AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf18AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf18Setup {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf18SetupTypeEnum;
+  /**
+   */
+  account_id: string;
+  /**
+   */
+  api_key: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf18SetupTypeEnum = {
+  API_KEY: 'API_KEY',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf18SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf18SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf18SetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf19 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf19AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf12SetupAnyOf;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf19AppIdEnum = {
+  WHATSAPP: 'WHATSAPP',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf19AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf19AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf19AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf1Setup {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf1SetupTypeEnum;
+  /**
+   */
+  api_key: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf1SetupTypeEnum = {
+  API_KEY: 'API_KEY',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf1SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf1SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf1SetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf2 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf2AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf2Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf2AppIdEnum = {
+  AUTH0: 'AUTH0',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf2AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf2AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf2AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf20 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf20AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf15SetupAnyOf;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf20AppIdEnum = {
+  ZAPIER: 'ZAPIER',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf20AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf20AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf20AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf2Setup {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf2SetupTypeEnum;
+  /**
+   */
+  client_id: string;
+  /**
+   */
+  client_secret: string;
+  /**
+   */
+  domain: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf2SetupTypeEnum = {
+  OAUTH_APP: 'OAUTH_APP',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf2SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf2SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf2SetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf3 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf3AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf3Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf3AppIdEnum = {
+  BIGQUERY: 'BIGQUERY',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf3AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf3AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf3AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf3Setup {
+  /**
+   */
+  type?: PostFlowsVaultConnectionsRequestAnyOf3SetupTypeEnum;
+  /**
+   */
+  project_id?: string;
+  /**
+   */
+  private_key?: string;
+  /**
+   */
+  client_email?: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf3SetupTypeEnum = {
+  OAUTH_JWT: 'OAUTH_JWT',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf3SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf3SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf3SetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf4 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf4AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf4Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf4AppIdEnum = {
+  CLEARBIT: 'CLEARBIT',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf4AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf4AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf4AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf4Setup {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf4SetupTypeEnum;
+  /**
+   */
+  secret_key: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf4SetupTypeEnum = {
+  API_KEY: 'API_KEY',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf4SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf4SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf4SetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf5 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf5AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf5Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf5AppIdEnum = {
+  DOCUSIGN: 'DOCUSIGN',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf5AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf5AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf5AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf5Setup {
+  [key: string]: any | any;
+  /**
+   */
+  type?: PostFlowsVaultConnectionsRequestAnyOf5SetupTypeEnum;
+  /**
+   */
+  code?: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf5SetupTypeEnum = {
+  OAUTH_CODE: 'OAUTH_CODE',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf5SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf5SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf5SetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf6 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf6AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf5Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf6AppIdEnum = {
+  GOOGLE_SHEETS: 'GOOGLE_SHEETS',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf6AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf6AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf6AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf7 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf7AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf7Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf7AppIdEnum = {
+  HTTP: 'HTTP',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf7AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf7AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf7AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf7Setup {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf7SetupTypeEnum;
+  /**
+   */
+  token: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf7SetupTypeEnum = {
+  BEARER: 'BEARER',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf7SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf7SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf7SetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf8 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf8AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf8Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf8AppIdEnum = {
+  HUBSPOT: 'HUBSPOT',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf8AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf8AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf8AppIdEnum];
+
+/**
+ *
+ */
+export type PostFlowsVaultConnectionsRequestAnyOf8Setup =
+  | PostFlowsVaultConnectionsRequestAnyOf1Setup
+  | PostFlowsVaultConnectionsRequestAnyOf5Setup;
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf9 {
+  [key: string]: any | any;
+  /**
+   */
+  app_id?: PostFlowsVaultConnectionsRequestAnyOf9AppIdEnum;
+  /**
+   */
+  setup?: PostFlowsVaultConnectionsRequestAnyOf9Setup;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf9AppIdEnum = {
+  JWT: 'JWT',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf9AppIdEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf9AppIdEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf9AppIdEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOf9Setup {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOf9SetupTypeEnum;
+  /**
+   */
+  algorithm: PostFlowsVaultConnectionsRequestAnyOf9SetupAlgorithmEnum;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOf9SetupTypeEnum = {
+  JWT: 'JWT',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf9SetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf9SetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf9SetupTypeEnum];
+
+export const PostFlowsVaultConnectionsRequestAnyOf9SetupAlgorithmEnum = {
+  HS256: 'HS256',
+  HS384: 'HS384',
+  HS512: 'HS512',
+  RS256: 'RS256',
+  RS384: 'RS384',
+  RS512: 'RS512',
+  ES256: 'ES256',
+  ES384: 'ES384',
+  ES512: 'ES512',
+  PS256: 'PS256',
+  PS384: 'PS384',
+  PS512: 'PS512',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOf9SetupAlgorithmEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOf9SetupAlgorithmEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOf9SetupAlgorithmEnum];
+
+/**
+ *
+ */
+export interface PostFlowsVaultConnectionsRequestAnyOfSetup {
+  /**
+   */
+  type: PostFlowsVaultConnectionsRequestAnyOfSetupTypeEnum;
+  /**
+   */
+  api_key: string;
+  /**
+   */
+  base_url?: string;
+}
+
+export const PostFlowsVaultConnectionsRequestAnyOfSetupTypeEnum = {
+  API_KEY: 'API_KEY',
+} as const;
+export type PostFlowsVaultConnectionsRequestAnyOfSetupTypeEnum =
+  (typeof PostFlowsVaultConnectionsRequestAnyOfSetupTypeEnum)[keyof typeof PostFlowsVaultConnectionsRequestAnyOfSetupTypeEnum];
+
+/**
+ *
+ */
+export interface PostForms201Response {
+  /**
+   */
+  id: string;
+  /**
+   */
+  name: string;
+  /**
+   */
+  messages?: PostFormsRequestMessages;
+  /**
+   */
+  languages?: PostFormsRequestLanguages;
+  /**
+   */
+  translations?: { [key: string]: any };
+  /**
+   */
+  nodes?: Array<PostFormsRequestNodesInner>;
+  /**
+   */
+  start?: PostFormsRequestStart;
+  /**
+   */
+  ending?: PostFormsRequestEnding;
+  /**
+   */
+  style?: PostFormsRequestStyle;
+  /**
+   */
+  created_at: string;
+  /**
+   */
+  updated_at: string;
+  /**
+   */
+  embedded_at?: string;
+  /**
+   */
+  submitted_at?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequest {
+  /**
+   */
+  name: string;
+  /**
+   */
+  messages?: PostFormsRequestMessages;
+  /**
+   */
+  languages?: PostFormsRequestLanguages;
+  /**
+   */
+  translations?: { [key: string]: any };
+  /**
+   */
+  nodes?: Array<PostFormsRequestNodesInner>;
+  /**
+   */
+  start?: PostFormsRequestStart;
+  /**
+   */
+  ending?: PostFormsRequestEnding;
+  /**
+   */
+  style?: PostFormsRequestStyle;
+}
+/**
+ *
+ */
+export interface PostFormsRequestEnding {
+  /**
+   */
+  redirection?: PostFormsRequestEndingRedirection;
+  /**
+   */
+  after_submit?: PostFormsRequestEndingAfterSubmit;
+  /**
+   */
+  coordinates?: PostFormsRequestNodesInnerAnyOfCoordinates;
+  /**
+   */
+  resume_flow?: PostFormsRequestEndingResumeFlowEnum;
+}
+
+export const PostFormsRequestEndingResumeFlowEnum = {
+  true: true,
+} as const;
+export type PostFormsRequestEndingResumeFlowEnum =
+  (typeof PostFormsRequestEndingResumeFlowEnum)[keyof typeof PostFormsRequestEndingResumeFlowEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestEndingAfterSubmit {
+  /**
+   */
+  flow_id?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestEndingRedirection {
+  /**
+   */
+  delay?: number;
+  /**
+   */
+  target: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestLanguages {
+  /**
+   */
+  primary?: string;
+  /**
+   */
+  _default?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestMessages {
+  /**
+   */
+  errors?: { [key: string]: any };
+  /**
+   */
+  custom?: { [key: string]: any };
+}
+/**
+ *
+ */
+export type PostFormsRequestNodesInner =
+  | PostFormsRequestNodesInnerAnyOf
+  | PostFormsRequestNodesInnerAnyOf1
+  | PostFormsRequestNodesInnerAnyOf2;
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf {
+  /**
+   */
+  id: string;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOfTypeEnum;
+  /**
+   */
+  coordinates?: PostFormsRequestNodesInnerAnyOfCoordinates;
+  /**
+   */
+  alias?: string;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOfConfig;
+}
+
+export const PostFormsRequestNodesInnerAnyOfTypeEnum = {
+  FLOW: 'FLOW',
+} as const;
+export type PostFormsRequestNodesInnerAnyOfTypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOfTypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOfTypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf1 {
+  /**
+   */
+  id: string;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf1TypeEnum;
+  /**
+   */
+  coordinates?: PostFormsRequestNodesInnerAnyOfCoordinates;
+  /**
+   */
+  alias?: string;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf1Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf1TypeEnum = {
+  ROUTER: 'ROUTER',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf1TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf1TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf1TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf1Config {
+  /**
+   */
+  rules?: Array<PostFormsRequestNodesInnerAnyOf1ConfigRulesInner>;
+  /**
+   */
+  fallback?: PostFormsRequestNodesInnerAnyOfConfigNextNode;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf1ConfigRulesInner {
+  /**
+   */
+  id: string;
+  /**
+   */
+  alias?: string;
+  /**
+   */
+  condition: any | null;
+  /**
+   */
+  next_node?: PostFormsRequestNodesInnerAnyOfConfigNextNode;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2 {
+  /**
+   */
+  id: string;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2TypeEnum;
+  /**
+   */
+  coordinates?: PostFormsRequestNodesInnerAnyOfCoordinates;
+  /**
+   */
+  alias?: string;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2TypeEnum = {
+  STEP: 'STEP',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2Config {
+  /**
+   */
+  components?: Array<PostFormsRequestNodesInnerAnyOf2ConfigComponentsInner>;
+  /**
+   */
+  next_node?: PostFormsRequestNodesInnerAnyOfConfigNextNode;
+}
+/**
+ *
+ */
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInner =
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2;
+/**
+ *
+ */
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf =
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf5
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf6;
+/**
+ *
+ */
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1 =
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1;
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOfTypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOfConfig;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOfTypeEnum = {
+  GMAPS_ADDRESS: 'GMAPS_ADDRESS',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOfTypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOfTypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOfTypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1TypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1TypeEnum = {
+  RECAPTCHA: 'RECAPTCHA',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOf1Config {
+  /**
+   */
+  site_key: string;
+  /**
+   */
+  secret_key: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf1AnyOfConfig {
+  /**
+   */
+  api_key: string;
+}
+/**
+ *
+ */
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2 =
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf1
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf12
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf14
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf15
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf2
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf4
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf5
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9;
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfTypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfConfig;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfTypeEnum = {
+  BOOLEAN: 'BOOLEAN',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfTypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfTypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfTypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf1 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf1TypeEnum;
+  /**
+   */
+  config?: { [key: string]: any };
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf1TypeEnum = {
+  CARDS: 'CARDS',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf1TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf1TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf1TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10TypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10TypeEnum = {
+  PASSWORD: 'PASSWORD',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10Config {
+  /**
+   */
+  hash?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10ConfigHashEnum;
+  /**
+   */
+  placeholder?: string;
+  /**
+   */
+  min_length?: number;
+  /**
+   */
+  max_length?: number;
+  /**
+   */
+  complexity?: boolean;
+  /**
+   */
+  nist?: boolean;
+  /**
+   */
+  strength_meter?: boolean;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10ConfigHashEnum = {
+  NONE: 'NONE',
+  MD5: 'MD5',
+  SHA1: 'SHA1',
+  SHA256: 'SHA256',
+  SHA512: 'SHA512',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10ConfigHashEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10ConfigHashEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf10ConfigHashEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11TypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11TypeEnum = {
+  PAYMENT: 'PAYMENT',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11Config {
+  /**
+   */
+  provider?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigProviderEnum;
+  /**
+   */
+  charge: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigCharge;
+  /**
+   */
+  credentials: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigCredentials;
+  /**
+   */
+  customer?: { [key: string]: any };
+  /**
+   */
+  fields?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigFields;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigProviderEnum =
+  {
+    STRIPE: 'STRIPE',
+  } as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigProviderEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigProviderEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigProviderEnum];
+
+/**
+ *
+ */
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigCharge =
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf
+  | PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf1;
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf {
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfTypeEnum;
+  /**
+   */
+  one_off: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOff;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfTypeEnum =
+  {
+    ONE_OFF: 'ONE_OFF',
+  } as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfTypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfTypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfTypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf1 {
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf1TypeEnum;
+  /**
+   */
+  subscription: { [key: string]: any };
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf1TypeEnum =
+  {
+    SUBSCRIPTION: 'SUBSCRIPTION',
+  } as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf1TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf1TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOf1TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOff {
+  [key: string]: any | any;
+  /**
+   */
+  amount: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOffAmount;
+  /**
+   */
+  currency: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOffCurrencyEnum;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOffCurrencyEnum =
+  {
+    AUD: 'AUD',
+    CAD: 'CAD',
+    CHF: 'CHF',
+    EUR: 'EUR',
+    GBP: 'GBP',
+    INR: 'INR',
+    MXN: 'MXN',
+    SEK: 'SEK',
+    USD: 'USD',
+  } as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOffCurrencyEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOffCurrencyEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOffCurrencyEnum];
+
+/**
+ *
+ */
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigChargeAnyOfOneOffAmount =
+  number | string;
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigCredentials {
+  /**
+   */
+  public_key: string;
+  /**
+   */
+  private_key: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigFields {
+  /**
+   */
+  card_number?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigFieldsCardNumber;
+  /**
+   */
+  expiration_date?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigFieldsCardNumber;
+  /**
+   */
+  security_code?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigFieldsCardNumber;
+  /**
+   */
+  trustmarks?: boolean;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf11ConfigFieldsCardNumber {
+  /**
+   */
+  label?: string;
+  /**
+   */
+  placeholder?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf12 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf12TypeEnum;
+  /**
+   */
+  config?: object;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf12TypeEnum = {
+  SOCIAL: 'SOCIAL',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf12TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf12TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf12TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13TypeEnum = {
+  TEL: 'TEL',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13Config {}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf14 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf14TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf13Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf14TypeEnum = {
+  TEXT: 'TEXT',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf14TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf14TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf14TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf15 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf15TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf15TypeEnum = {
+  URL: 'URL',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf15TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf15TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf15TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf2 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf2TypeEnum;
+  /**
+   */
+  config?: { [key: string]: any };
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf2TypeEnum = {
+  CHOICE: 'CHOICE',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf2TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf2TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf2TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3TypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3TypeEnum = {
+  CUSTOM: 'CUSTOM',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf3Config {
+  /**
+   */
+  schema: { [key: string]: any };
+  /**
+   */
+  code: string;
+  /**
+   */
+  css?: string;
+  /**
+   */
+  params?: { [key: string]: any };
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf4 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf4TypeEnum;
+  /**
+   */
+  config: { [key: string]: any };
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf4TypeEnum = {
+  DATE: 'DATE',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf4TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf4TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf4TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf5 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf5TypeEnum;
+  /**
+   */
+  config?: { [key: string]: any };
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf5TypeEnum = {
+  DROPDOWN: 'DROPDOWN',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf5TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf5TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf5TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6TypeEnum = {
+  EMAIL: 'EMAIL',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf6Config {
+  /**
+   */
+  default_value?: string;
+  /**
+   */
+  placeholder?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7TypeEnum = {
+  FILE: 'FILE',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7Config {
+  /**
+   */
+  multiple?: boolean;
+  /**
+   */
+  storage?: { [key: string]: any };
+  /**
+   */
+  categories?: Array<PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7ConfigCategoriesEnum>;
+  /**
+   */
+  extensions?: Array<string>;
+  /**
+   */
+  maxSize?: number;
+  /**
+   */
+  maxFiles?: number;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7ConfigCategoriesEnum =
+  {
+    AUDIO: 'AUDIO',
+    VIDEO: 'VIDEO',
+    IMAGE: 'IMAGE',
+    DOCUMENT: 'DOCUMENT',
+    ARCHIVE: 'ARCHIVE',
+  } as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7ConfigCategoriesEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7ConfigCategoriesEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf7ConfigCategoriesEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8TypeEnum = {
+  LEGAL: 'LEGAL',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf8Config {
+  /**
+   */
+  text?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9TypeEnum = {
+  NUMBER: 'NUMBER',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOf9Config {
+  /**
+   */
+  default_value?: number;
+  /**
+   */
+  placeholder?: string;
+  /**
+   */
+  min_value?: number;
+  /**
+   */
+  max_value?: number;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfConfig {
+  /**
+   */
+  default_value?: boolean;
+  /**
+   */
+  options?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfConfigOptions;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOf2AnyOfConfigOptions {
+  /**
+   */
+  _true?: string;
+  /**
+   */
+  _false?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOfTypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOfConfig;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOfTypeEnum = {
+  DIVIDER: 'DIVIDER',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOfTypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOfTypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOfTypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1TypeEnum = {
+  HTML: 'HTML',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1Config {
+  /**
+   */
+  content?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2TypeEnum = {
+  IMAGE: 'IMAGE',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2Config {
+  /**
+   */
+  src: string;
+  /**
+   */
+  position?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2ConfigPositionEnum;
+  /**
+   */
+  height?: number;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2ConfigPositionEnum = {
+  LEFT: 'LEFT',
+  CENTER: 'CENTER',
+  RIGHT: 'RIGHT',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2ConfigPositionEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2ConfigPositionEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf2ConfigPositionEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3TypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3TypeEnum = {
+  JUMP_BUTTON: 'JUMP_BUTTON',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3Config {
+  /**
+   */
+  text: string;
+  /**
+   */
+  next_node: PostFormsRequestNodesInnerAnyOfConfigNextNode;
+  /**
+   */
+  style?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3ConfigStyle;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf3ConfigStyle {
+  /**
+   */
+  background_color?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4TypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4TypeEnum = {
+  NEXT_BUTTON: 'NEXT_BUTTON',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4Config {
+  /**
+   */
+  text: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf5 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf5TypeEnum;
+  /**
+   */
+  config: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf4Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf5TypeEnum = {
+  PREVIOUS_BUTTON: 'PREVIOUS_BUTTON',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf5TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf5TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf5TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf6 {
+  [key: string]: any | any;
+  /**
+   */
+  type: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf6TypeEnum;
+  /**
+   */
+  config?: PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf1Config;
+}
+
+export const PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf6TypeEnum = {
+  RICH_TEXT: 'RICH_TEXT',
+} as const;
+export type PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf6TypeEnum =
+  (typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf6TypeEnum)[keyof typeof PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOf6TypeEnum];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOf2ConfigComponentsInnerAnyOfAnyOfConfig {
+  /**
+   */
+  text?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOfConfig {
+  /**
+   */
+  flow_id: string;
+  /**
+   */
+  next_node?: PostFormsRequestNodesInnerAnyOfConfigNextNode;
+}
+/**
+ *
+ */
+export type PostFormsRequestNodesInnerAnyOfConfigNextNode =
+  | PostFormsRequestNodesInnerAnyOfConfigNextNodeAnyOf
+  | string;
+
+/**
+ *
+ */
+export const PostFormsRequestNodesInnerAnyOfConfigNextNodeAnyOf = {
+  ending: '$ending',
+} as const;
+export type PostFormsRequestNodesInnerAnyOfConfigNextNodeAnyOf =
+  (typeof PostFormsRequestNodesInnerAnyOfConfigNextNodeAnyOf)[keyof typeof PostFormsRequestNodesInnerAnyOfConfigNextNodeAnyOf];
+
+/**
+ *
+ */
+export interface PostFormsRequestNodesInnerAnyOfCoordinates {
+  /**
+   */
+  x: number;
+  /**
+   */
+  y: number;
+}
+/**
+ *
+ */
+export interface PostFormsRequestStart {
+  /**
+   */
+  hidden_fields?: Array<PostFormsRequestStartHiddenFieldsInner>;
+  /**
+   */
+  next_node?: PostFormsRequestNodesInnerAnyOfConfigNextNode;
+  /**
+   */
+  coordinates?: PostFormsRequestNodesInnerAnyOfCoordinates;
+}
+/**
+ *
+ */
+export interface PostFormsRequestStartHiddenFieldsInner {
+  /**
+   */
+  key: string;
+  /**
+   */
+  value?: string;
+}
+/**
+ *
+ */
+export interface PostFormsRequestStyle {
+  /**
+   */
+  css?: string;
 }
 /**
  *
@@ -9439,6 +12946,16 @@ export interface PostMembersRequest {
 /**
  *
  */
+export interface PostOrganizationClientGrantsRequest {
+  /**
+   * A Client Grant ID to add to the organization.
+   *
+   */
+  grant_id: string;
+}
+/**
+ *
+ */
 export interface PostOrganizationMemberRolesRequest {
   /**
    * List of roles IDs to associated with the user.
@@ -9494,10 +13011,34 @@ export interface PostOrganizations201ResponseEnabledConnectionsInner {
    */
   assign_membership_on_login: boolean;
   /**
-   * Enables showing a button for the connection in the organization login page. If false, it will be usable only by HRD.
+   * Determines whether a connection should be displayed on this organization’s login prompt. Only applicable for enterprise connections. Default: true.
    *
    */
   show_as_button: boolean;
+  /**
+   * Determines whether organization signup should be enabled for this organization connection. Only applicable for database connections. Default: false.
+   *
+   */
+  is_signup_enabled: boolean;
+  /**
+   */
+  connection: PostOrganizations201ResponseEnabledConnectionsInnerConnection;
+}
+/**
+ *
+ */
+export interface PostOrganizations201ResponseEnabledConnectionsInnerConnection {
+  [key: string]: any | any;
+  /**
+   * The name of the enabled connection.
+   *
+   */
+  name: string;
+  /**
+   * The strategy of the enabled connection.
+   *
+   */
+  strategy: string;
 }
 /**
  *
@@ -9555,10 +13096,15 @@ export interface PostOrganizationsRequestEnabledConnectionsInner {
    */
   assign_membership_on_login?: boolean;
   /**
-   * Enables showing a button for the connection in the organization login page. If false, it will be usable only by HRD.
+   * Determines whether a connection should be displayed on this organization’s login prompt. Only applicable for enterprise connections. Default: true.
    *
    */
   show_as_button?: boolean;
+  /**
+   * Determines whether organization signup should be enabled for this organization connection. Only applicable for database connections. Default: false.
+   *
+   */
+  is_signup_enabled?: boolean;
 }
 /**
  *
@@ -9676,6 +13222,82 @@ export interface PostRoleUsersRequest {
    *
    */
   users: Array<string>;
+}
+/**
+ *
+ */
+export interface PostScimConfigurationRequest {
+  /**
+   * User ID attribute for generating unique user ids
+   *
+   */
+  user_id_attribute?: string;
+  /**
+   * The mapping between auth0 and SCIM
+   *
+   */
+  mapping?: Array<PostScimConfigurationRequestMappingInner>;
+}
+/**
+ *
+ */
+export interface PostScimConfigurationRequestMappingInner {
+  [key: string]: any | any;
+  /**
+   * The field location in the auth0 schema
+   *
+   */
+  auth0?: string;
+  /**
+   * The field location in the SCIM schema
+   *
+   */
+  scim?: string;
+}
+/**
+ *
+ */
+export interface PostScimToken201Response {
+  /**
+   * The token's identifier
+   *
+   */
+  token_id: string;
+  /**
+   * The scim client's token
+   *
+   */
+  token: string;
+  /**
+   * The scopes of the scim token
+   *
+   */
+  scopes: Array<string>;
+  /**
+   * The token's created at timestamp
+   *
+   */
+  created_at: string;
+  /**
+   * The token's valid until at timestamp
+   *
+   */
+  valid_until: string;
+}
+/**
+ * SCIM Token
+ */
+export interface PostScimTokenRequest {
+  /**
+   * The scopes of the scim token
+   *
+   */
+  scopes?: Array<string>;
+  /**
+   * Lifetime of the token in seconds. Must be greater than 900
+   *
+   */
+  token_lifetime?: number | null;
 }
 /**
  *
@@ -10406,13 +14028,25 @@ export interface ResourceServer {
    */
   enforce_policies: boolean;
   /**
-   * Dialect of access tokens that should be issued. Can be `access_token` or `access_token_authz` (includes permissions).
+   * Dialect of access tokens that should be issued. `access_token` is a JWT containing standard Auth0 claims; `rfc9068_profile` is a JWT conforming to the IETF JWT Access Token Profile. `access_token_authz` and `rfc9068_profile_authz` additionally include RBAC permissions claims.
    *
    */
   token_dialect: ResourceServerTokenDialectEnum;
   /**
    */
   client: object;
+  /**
+   */
+  token_encryption: ResourceServerTokenEncryption | null;
+  /**
+   */
+  consent_policy: ResourceServerConsentPolicyEnum;
+  /**
+   */
+  authorization_details: Array<any>;
+  /**
+   */
+  proof_of_possession: ResourceServerProofOfPossession | null;
 }
 
 export const ResourceServerSigningAlgEnum = {
@@ -10424,11 +14058,20 @@ export type ResourceServerSigningAlgEnum =
   (typeof ResourceServerSigningAlgEnum)[keyof typeof ResourceServerSigningAlgEnum];
 
 export const ResourceServerTokenDialectEnum = {
-  token: 'access_token',
-  token_authz: 'access_token_authz',
+  access_token: 'access_token',
+  access_token_authz: 'access_token_authz',
+  rfc9068_profile: 'rfc9068_profile',
+  rfc9068_profile_authz: 'rfc9068_profile_authz',
 } as const;
 export type ResourceServerTokenDialectEnum =
   (typeof ResourceServerTokenDialectEnum)[keyof typeof ResourceServerTokenDialectEnum];
+
+export const ResourceServerConsentPolicyEnum = {
+  transactional_authorization_with_mfa: 'transactional-authorization-with-mfa',
+  null: 'null',
+} as const;
+export type ResourceServerConsentPolicyEnum =
+  (typeof ResourceServerConsentPolicyEnum)[keyof typeof ResourceServerConsentPolicyEnum];
 
 /**
  *
@@ -10470,7 +14113,7 @@ export interface ResourceServerCreate {
    */
   token_lifetime?: number;
   /**
-   * Dialect of issued access token. Can be `access_token` or `access_token_authz` (includes permissions). Values can be `access_token` or `access_token_authz` (includes permissions).
+   * Dialect of issued access token. `access_token` is a JWT containing standard Auth0 claims; `rfc9068_profile` is a JWT conforming to the IETF JWT Access Token Profile. `access_token_authz` and `rfc9068_profile_authz` additionally include RBAC permissions claims.
    *
    */
   token_dialect?: ResourceServerCreateTokenDialectEnum;
@@ -10487,6 +14130,18 @@ export interface ResourceServerCreate {
   /**
    */
   client?: object;
+  /**
+   */
+  token_encryption?: ResourceServerTokenEncryption | null;
+  /**
+   */
+  consent_policy?: ResourceServerCreateConsentPolicyEnum;
+  /**
+   */
+  authorization_details?: Array<any>;
+  /**
+   */
+  proof_of_possession?: ResourceServerProofOfPossession | null;
 }
 
 export const ResourceServerCreateSigningAlgEnum = {
@@ -10498,11 +14153,96 @@ export type ResourceServerCreateSigningAlgEnum =
   (typeof ResourceServerCreateSigningAlgEnum)[keyof typeof ResourceServerCreateSigningAlgEnum];
 
 export const ResourceServerCreateTokenDialectEnum = {
-  token: 'access_token',
-  token_authz: 'access_token_authz',
+  access_token: 'access_token',
+  access_token_authz: 'access_token_authz',
+  rfc9068_profile: 'rfc9068_profile',
+  rfc9068_profile_authz: 'rfc9068_profile_authz',
 } as const;
 export type ResourceServerCreateTokenDialectEnum =
   (typeof ResourceServerCreateTokenDialectEnum)[keyof typeof ResourceServerCreateTokenDialectEnum];
+
+export const ResourceServerCreateConsentPolicyEnum = {
+  transactional_authorization_with_mfa: 'transactional-authorization-with-mfa',
+  null: 'null',
+} as const;
+export type ResourceServerCreateConsentPolicyEnum =
+  (typeof ResourceServerCreateConsentPolicyEnum)[keyof typeof ResourceServerCreateConsentPolicyEnum];
+
+/**
+ * Proof-of-Possession configuration for access tokens
+ */
+export interface ResourceServerProofOfPossession {
+  /**
+   * Intended mechanism for Proof-of-Possession
+   *
+   */
+  mechanism: ResourceServerProofOfPossessionMechanismEnum;
+  /**
+   * Whether the use of Proof-of-Possession is required for the resource server
+   *
+   */
+  required: boolean;
+}
+
+export const ResourceServerProofOfPossessionMechanismEnum = {
+  mtls: 'mtls',
+} as const;
+export type ResourceServerProofOfPossessionMechanismEnum =
+  (typeof ResourceServerProofOfPossessionMechanismEnum)[keyof typeof ResourceServerProofOfPossessionMechanismEnum];
+
+/**
+ *
+ */
+export interface ResourceServerTokenEncryption {
+  /**
+   * Format of the encrypted JWT payload.
+   *
+   */
+  format: ResourceServerTokenEncryptionFormatEnum;
+  /**
+   */
+  encryption_key: ResourceServerTokenEncryptionEncryptionKey;
+}
+
+export const ResourceServerTokenEncryptionFormatEnum = {
+  compact_nested_jwe: 'compact-nested-jwe',
+} as const;
+export type ResourceServerTokenEncryptionFormatEnum =
+  (typeof ResourceServerTokenEncryptionFormatEnum)[keyof typeof ResourceServerTokenEncryptionFormatEnum];
+
+/**
+ *
+ */
+export interface ResourceServerTokenEncryptionEncryptionKey {
+  /**
+   * Name of the encryption key.
+   *
+   */
+  name?: string;
+  /**
+   * Algorithm used to encrypt the token.
+   *
+   */
+  alg: ResourceServerTokenEncryptionEncryptionKeyAlgEnum;
+  /**
+   * Key ID.
+   *
+   */
+  kid?: string;
+  /**
+   * PEM-formatted public key. Must be JSON escaped.
+   *
+   */
+  pem: string;
+}
+
+export const ResourceServerTokenEncryptionEncryptionKeyAlgEnum = {
+  _256: 'RSA-OAEP-256',
+  _384: 'RSA-OAEP-384',
+  _512: 'RSA-OAEP-512',
+} as const;
+export type ResourceServerTokenEncryptionEncryptionKeyAlgEnum =
+  (typeof ResourceServerTokenEncryptionEncryptionKeyAlgEnum)[keyof typeof ResourceServerTokenEncryptionEncryptionKeyAlgEnum];
 
 /**
  *
@@ -10544,7 +14284,7 @@ export interface ResourceServerUpdate {
    */
   token_lifetime?: number;
   /**
-   * Dialect of issued access token. Can be `access_token` or `access_token_authz` (includes permissions).
+   * Dialect of issued access token. `access_token` is a JWT containing standard Auth0 claims; `rfc9068_profile` is a JWT conforming to the IETF JWT Access Token Profile. `access_token_authz` and `rfc9068_profile_authz` additionally include RBAC permissions claims.
    *
    */
   token_dialect?: ResourceServerUpdateTokenDialectEnum;
@@ -10556,6 +14296,18 @@ export interface ResourceServerUpdate {
   /**
    */
   client?: object;
+  /**
+   */
+  token_encryption?: ResourceServerTokenEncryption | null;
+  /**
+   */
+  consent_policy?: ResourceServerUpdateConsentPolicyEnum;
+  /**
+   */
+  authorization_details?: Array<any>;
+  /**
+   */
+  proof_of_possession?: ResourceServerProofOfPossession | null;
 }
 
 export const ResourceServerUpdateSigningAlgEnum = {
@@ -10567,11 +14319,20 @@ export type ResourceServerUpdateSigningAlgEnum =
   (typeof ResourceServerUpdateSigningAlgEnum)[keyof typeof ResourceServerUpdateSigningAlgEnum];
 
 export const ResourceServerUpdateTokenDialectEnum = {
-  token: 'access_token',
-  token_authz: 'access_token_authz',
+  access_token: 'access_token',
+  access_token_authz: 'access_token_authz',
+  rfc9068_profile: 'rfc9068_profile',
+  rfc9068_profile_authz: 'rfc9068_profile_authz',
 } as const;
 export type ResourceServerUpdateTokenDialectEnum =
   (typeof ResourceServerUpdateTokenDialectEnum)[keyof typeof ResourceServerUpdateTokenDialectEnum];
+
+export const ResourceServerUpdateConsentPolicyEnum = {
+  transactional_authorization_with_mfa: 'transactional-authorization-with-mfa',
+  null: 'null',
+} as const;
+export type ResourceServerUpdateConsentPolicyEnum =
+  (typeof ResourceServerUpdateConsentPolicyEnum)[keyof typeof ResourceServerUpdateConsentPolicyEnum];
 
 /**
  *
@@ -10751,6 +14512,182 @@ export interface SnsFactorProvider {
 /**
  *
  */
+export interface SsProfile {
+  /**
+   * The unique ID of the self-service Profile.
+   *
+   */
+  id: string;
+  /**
+   * List of attributes to be mapped that will be shown to the user during the SS-SSO flow.
+   *
+   */
+  user_attributes: Array<SsProfileUserAttributesInner>;
+  /**
+   * The time when this self-service Profile was created.
+   *
+   */
+  created_at: string;
+  /**
+   * The time when this self-service Profile was updated.
+   *
+   */
+  updated_at: string;
+  /**
+   */
+  branding: SsProfileBranding;
+}
+/**
+ *
+ */
+export interface SsProfileBranding {
+  [key: string]: any | any;
+  /**
+   */
+  logo_url: string;
+  /**
+   */
+  colors: SsProfileBrandingColors;
+}
+/**
+ *
+ */
+export interface SsProfileBrandingColors {
+  [key: string]: any | any;
+  /**
+   */
+  primary: string;
+}
+/**
+ *
+ */
+export interface SsProfileCreate {
+  /**
+   * List of attributes to be mapped that will be shown to the user during the SS-SSO flow.
+   *
+   */
+  user_attributes?: Array<SsProfileUserAttributesInner>;
+  /**
+   */
+  branding?: SsProfileCreateBranding;
+}
+/**
+ *
+ */
+export interface SsProfileCreateBranding {
+  [key: string]: any | any;
+  /**
+   */
+  logo_url?: string;
+  /**
+   */
+  colors?: SsProfileBrandingColors;
+}
+/**
+ *
+ */
+export interface SsProfileList extends Array<SsProfile> {}
+/**
+ *
+ */
+export interface SsProfileUpdate {
+  /**
+   * List of attributes to be mapped that will be shown to the user during the SS-SSO flow.
+   *
+   */
+  user_attributes?: Array<SsProfileUserAttributesInner> | null;
+  /**
+   */
+  branding?: SsProfileUpdateBranding | null;
+}
+/**
+ *
+ */
+export interface SsProfileUpdateBranding {
+  [key: string]: any | any;
+  /**
+   */
+  logo_url?: string;
+  /**
+   */
+  colors?: SsProfileBrandingColors;
+}
+/**
+ *
+ */
+export interface SsProfileUserAttributesInner {
+  /**
+   * Identifier of this attribute.
+   *
+   */
+  name: string;
+  /**
+   * Description of this attribute.
+   *
+   */
+  description: string;
+  /**
+   * Determines if this attribute is required
+   *
+   */
+  is_optional: boolean;
+}
+/**
+ *
+ */
+export interface SsoAccessTicketResponse {
+  /**
+   * The URL for the created ticket.
+   *
+   */
+  ticket: string;
+}
+/**
+ *
+ */
+export interface SsoTicketRequestJson {
+  /**
+   * If provided, this will allow editing of the provided connection during the SSO Flow
+   *
+   */
+  connection_id?: string;
+  /**
+   */
+  connection_config?: SsoTicketRequestJsonConnectionConfig;
+  /**
+   * List of client_ids that the connection will be enabled for.
+   *
+   */
+  enabled_clients?: Array<string>;
+  /**
+   * List of organizations that the connection will be enabled for.
+   *
+   */
+  enabled_organizations?: Array<SsoTicketRequestJsonEnabledOrganizationsInner>;
+}
+/**
+ * If provided, this will create a new connection for the SSO flow with the given configuration
+ */
+export interface SsoTicketRequestJsonConnectionConfig {
+  /**
+   * The name of the connection that will be created as a part of the SSO flow.
+   *
+   */
+  name: string;
+}
+/**
+ *
+ */
+export interface SsoTicketRequestJsonEnabledOrganizationsInner {
+  /**
+   * Organization identifier
+   *
+   */
+  organization_id: string;
+}
+/**
+ *
+ */
 export interface StatsEntry {
   [key: string]: any | any;
   /**
@@ -10899,6 +14836,19 @@ export interface TenantSettings {
    *
    */
   customize_mfa_in_postlogin_action: boolean;
+  /**
+   * Supported ACR values
+   *
+   */
+  acr_values_supported: Array<string>;
+  /**
+   */
+  mtls: TenantSettingsMtls | null;
+  /**
+   * Enables the use of Pushed Authorization Requests
+   *
+   */
+  pushed_authorization_requests_supported: boolean;
 }
 
 export const TenantSettingsEnabledLocalesEnum = {
@@ -11127,6 +15077,11 @@ export interface TenantSettingsFlags {
    *
    */
   mfa_show_factor_list_on_enrollment: boolean;
+  /**
+   * Removes alg property from jwks .well-known endpoint
+   *
+   */
+  remove_alg_from_jwks: boolean;
 }
 /**
  * Guardian page customization.
@@ -11142,6 +15097,16 @@ export interface TenantSettingsGuardianMfaPage {
    *
    */
   html: string;
+}
+/**
+ * mTLS configuration.
+ */
+export interface TenantSettingsMtls {
+  /**
+   * If true, enables mTLS endpoint aliases
+   *
+   */
+  enable_endpoint_aliases: boolean;
 }
 /**
  * Session cookie configuration
@@ -11266,6 +15231,19 @@ export interface TenantSettingsUpdate {
    *
    */
   allow_organization_name_in_authentication_api?: boolean | null;
+  /**
+   * Supported ACR values
+   *
+   */
+  acr_values_supported?: Array<string>;
+  /**
+   */
+  mtls?: TenantSettingsUpdateMtls | null;
+  /**
+   * Enables the use of Pushed Authorization Requests
+   *
+   */
+  pushed_authorization_requests_supported?: boolean | null;
 }
 
 export const TenantSettingsUpdateEnabledLocalesEnum = {
@@ -11504,6 +15482,11 @@ export interface TenantSettingsUpdateFlags {
    *
    */
   mfa_show_factor_list_on_enrollment?: boolean;
+  /**
+   * Removes alg property from jwks .well-known endpoint
+   *
+   */
+  remove_alg_from_jwks?: boolean;
 }
 
 export const TenantSettingsUpdateFlagsChangePwdFlowV1Enum = {
@@ -11526,6 +15509,16 @@ export interface TenantSettingsUpdateGuardianMfaPage {
    *
    */
   html?: string;
+}
+/**
+ * mTLS configuration.
+ */
+export interface TenantSettingsUpdateMtls {
+  /**
+   * If true, enables mTLS endpoint aliases
+   *
+   */
+  enable_endpoint_aliases?: boolean;
 }
 /**
  * Sessions related settings for tenant
@@ -12379,6 +16372,16 @@ export interface GetClientsRequest {
    */
   include_totals?: boolean;
   /**
+   * Optional Id from which to start selection.
+   *
+   */
+  from?: string;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  take?: number;
+  /**
    * Optional filter on the global client parameter.
    *
    */
@@ -12393,6 +16396,16 @@ export interface GetClientsRequest {
    *
    */
   app_type?: string;
+  /**
+   * A comma separated list of client_ids used to filter the returned clients
+   *
+   */
+  client_ids?: string;
+  /**
+   * Query in <a href ="http://www.lucenetutorial.com/lucene-query-syntax.html">Lucene query string syntax</a>.
+   *
+   */
+  q?: string;
 }
 /**
  *
@@ -12493,6 +16506,31 @@ export interface DeleteConnectionsByIdRequest {
    *
    */
   id: string;
+}
+/**
+ *
+ */
+export interface DeleteScimConfigurationRequest {
+  /**
+   * The id of the connection to delete its SCIM configuration
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface DeleteTokensByTokenIdRequest {
+  /**
+   * The connection id that owns the SCIM token to delete
+   *
+   */
+  id: string;
+  /**
+   * The id of the scim token to delete
+   *
+   */
+  tokenId: string;
 }
 /**
  *
@@ -12653,6 +16691,36 @@ export interface GetConnectionsByIdRequest {
 /**
  *
  */
+export interface GetDefaultMappingRequest {
+  /**
+   * The id of the connection to retrieve its default SCIM mapping
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface GetScimConfigurationRequest {
+  /**
+   * The id of the connection to retrieve its SCIM configuration
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface GetScimTokensRequest {
+  /**
+   * The id of the connection to retrieve its SCIM configuration
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
 export interface GetStatusRequest {
   /**
    * ID of the connection to check
@@ -12666,6 +16734,36 @@ export interface GetStatusRequest {
 export interface PatchConnectionsByIdRequest {
   /**
    * The id of the connection to retrieve
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface PatchScimConfigurationOperationRequest {
+  /**
+   * The id of the connection to update its SCIM configuration
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface PostScimConfigurationOperationRequest {
+  /**
+   * The id of the connection to create its SCIM configuration
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface PostScimTokenOperationRequest {
+  /**
+   * The id of the connection to create its SCIM token
    *
    */
   id: string;
@@ -12881,6 +16979,301 @@ export interface GetProviderRequest {
    *
    */
   include_fields?: boolean;
+}
+/**
+ *
+ */
+export interface DeleteFlowsByIdRequest {
+  /**
+   * Flow id
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface DeleteFlowsExecutionsByExecutionIdRequest {
+  /**
+   * Flows id
+   *
+   */
+  flow_id: string;
+  /**
+   * Flow execution identifier
+   *
+   */
+  execution_id: string;
+}
+/**
+ *
+ */
+export interface DeleteFlowsVaultConnectionsByIdRequest {
+  /**
+   * Vault connection id
+   *
+   */
+  id: string;
+}
+
+/**
+ *
+ */
+export const GetFlowsHydrateEnum = {
+  form_count: 'form_count',
+} as const;
+export type GetFlowsHydrateEnum = (typeof GetFlowsHydrateEnum)[keyof typeof GetFlowsHydrateEnum];
+
+/**
+ *
+ */
+export interface GetFlowsRequest {
+  /**
+   * Page index of the results to return. First page is 0.
+   *
+   */
+  page?: number;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  per_page?: number;
+  /**
+   * Return results inside an object that contains the total result count (true) or as a direct array of results (false, default).
+   *
+   */
+  include_totals?: boolean;
+  /**
+   * hydration param
+   *
+   */
+  hydrate?: Array<GetFlowsHydrateEnum>;
+  /**
+   * flag to filter by sync/async flows
+   *
+   */
+  synchronous?: boolean;
+}
+
+/**
+ *
+ */
+export const GetFlowsByIdHydrateEnum = {
+  form_count: 'form_count',
+} as const;
+export type GetFlowsByIdHydrateEnum =
+  (typeof GetFlowsByIdHydrateEnum)[keyof typeof GetFlowsByIdHydrateEnum];
+
+/**
+ *
+ */
+export interface GetFlowsByIdRequest {
+  /**
+   * Flow identifier
+   *
+   */
+  id: string;
+  /**
+   * hydration param
+   *
+   */
+  hydrate?: Array<GetFlowsByIdHydrateEnum>;
+}
+/**
+ *
+ */
+export interface GetFlowsExecutionsRequest {
+  /**
+   * Flow id
+   *
+   */
+  flow_id: string;
+  /**
+   * Page index of the results to return. First page is 0.
+   *
+   */
+  page?: number;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  per_page?: number;
+  /**
+   * Return results inside an object that contains the total result count (true) or as a direct array of results (false, default).
+   *
+   */
+  include_totals?: boolean;
+  /**
+   * Optional Id from which to start selection.
+   *
+   */
+  from?: string;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  take?: number;
+}
+
+/**
+ *
+ */
+export const GetFlowsExecutionsByExecutionIdHydrateEnum = {
+  debug: 'debug',
+} as const;
+export type GetFlowsExecutionsByExecutionIdHydrateEnum =
+  (typeof GetFlowsExecutionsByExecutionIdHydrateEnum)[keyof typeof GetFlowsExecutionsByExecutionIdHydrateEnum];
+
+/**
+ *
+ */
+export interface GetFlowsExecutionsByExecutionIdRequest {
+  /**
+   * Flow id
+   *
+   */
+  flow_id: string;
+  /**
+   * Flow execution id
+   *
+   */
+  execution_id: string;
+  /**
+   * Hydration param
+   *
+   */
+  hydrate?: Array<GetFlowsExecutionsByExecutionIdHydrateEnum>;
+}
+/**
+ *
+ */
+export interface GetFlowsVaultConnectionsRequest {
+  /**
+   * Page index of the results to return. First page is 0.
+   *
+   */
+  page?: number;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  per_page?: number;
+  /**
+   * Return results inside an object that contains the total result count (true) or as a direct array of results (false, default).
+   *
+   */
+  include_totals?: boolean;
+}
+/**
+ *
+ */
+export interface GetFlowsVaultConnectionsByIdRequest {
+  /**
+   * Flows Vault connection ID
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface PatchFlowsByIdOperationRequest {
+  /**
+   * Flow identifier
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface PatchFlowsVaultConnectionsByIdOperationRequest {
+  /**
+   * Flows Vault connection ID
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface DeleteFormsByIdRequest {
+  /**
+   * Form id
+   *
+   */
+  id: string;
+}
+
+/**
+ *
+ */
+export const GetFormsHydrateEnum = {
+  flow_count: 'flow_count',
+  links: 'links',
+} as const;
+export type GetFormsHydrateEnum = (typeof GetFormsHydrateEnum)[keyof typeof GetFormsHydrateEnum];
+
+/**
+ *
+ */
+export interface GetFormsRequest {
+  /**
+   * Page index of the results to return. First page is 0.
+   *
+   */
+  page?: number;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  per_page?: number;
+  /**
+   * Return results inside an object that contains the total result count (true) or as a direct array of results (false, default).
+   *
+   */
+  include_totals?: boolean;
+  /**
+   * hydration param
+   *
+   */
+  hydrate?: Array<GetFormsHydrateEnum>;
+}
+
+/**
+ *
+ */
+export const GetFormsByIdHydrateEnum = {
+  flow_count: 'flow_count',
+  links: 'links',
+} as const;
+export type GetFormsByIdHydrateEnum =
+  (typeof GetFormsByIdHydrateEnum)[keyof typeof GetFormsByIdHydrateEnum];
+
+/**
+ *
+ */
+export interface GetFormsByIdRequest {
+  /**
+   * Form identifier
+   *
+   */
+  id: string;
+  /**
+   * hydration param
+   *
+   */
+  hydrate?: Array<GetFormsByIdHydrateEnum>;
+}
+/**
+ *
+ */
+export interface PatchFormsByIdOperationRequest {
+  /**
+   * Form identifier
+   *
+   */
+  id: string;
 }
 /**
  *
@@ -13269,6 +17662,21 @@ export interface GetLogsByIdRequest {
 /**
  *
  */
+export interface DeleteClientGrantsByGrantIdRequest {
+  /**
+   * Organization identifier
+   *
+   */
+  id: string;
+  /**
+   * The Client Grant ID to remove from the organization
+   *
+   */
+  grant_id: string;
+}
+/**
+ *
+ */
 export interface DeleteEnabledConnectionsByConnectionIdRequest {
   /**
    * Organization identifier
@@ -13494,6 +17902,46 @@ export interface GetNameByNameRequest {
 /**
  *
  */
+export interface GetOrganizationClientGrantsRequest {
+  /**
+   * Organization identifier
+   *
+   */
+  id: string;
+  /**
+   * Optional filter on audience of the client grant.
+   *
+   */
+  audience?: string;
+  /**
+   * Optional filter on client_id of the client grant.
+   *
+   */
+  client_id?: string;
+  /**
+   * A list of grant ids, which will filter the results.
+   *
+   */
+  grant_ids?: Array<string>;
+  /**
+   * Page index of the results to return. First page is 0.
+   *
+   */
+  page?: number;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  per_page?: number;
+  /**
+   * Return results inside an object that contains the total result count (true) or as a direct array of results (false, default).
+   *
+   */
+  include_totals?: boolean;
+}
+/**
+ *
+ */
 export interface GetOrganizationMemberRolesRequest {
   /**
    * Organization identifier
@@ -13615,6 +18063,16 @@ export interface PostInvitationsOperationRequest {
  *
  */
 export interface PostMembersOperationRequest {
+  /**
+   * Organization identifier
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface PostOrganizationClientGrantsOperationRequest {
   /**
    * Organization identifier
    *
@@ -13755,9 +18213,11 @@ export const GetPartialsPromptEnum = {
   login: 'login',
   login_id: 'login-id',
   login_password: 'login-password',
+  login_passwordless: 'login-passwordless',
   signup: 'signup',
   signup_id: 'signup-id',
   signup_password: 'signup-password',
+  customized_consent: 'customized-consent',
 } as const;
 export type GetPartialsPromptEnum =
   (typeof GetPartialsPromptEnum)[keyof typeof GetPartialsPromptEnum];
@@ -13883,6 +18343,7 @@ export interface PutCustomTextByLanguageRequest {
    */
   language: PutCustomTextByLanguageLanguageEnum;
 }
+
 /**
  *
  */
@@ -13890,9 +18351,11 @@ export const PutPartialsPromptEnum = {
   login: 'login',
   login_id: 'login-id',
   login_password: 'login-password',
+  login_passwordless: 'login-passwordless',
   signup: 'signup',
   signup_id: 'signup-id',
   signup_password: 'signup-password',
+  customized_consent: 'customized-consent',
 } as const;
 export type PutPartialsPromptEnum =
   (typeof PutPartialsPromptEnum)[keyof typeof PutPartialsPromptEnum];
@@ -13910,6 +18373,26 @@ export interface PutPartialsRequest {
 /**
  *
  */
+export interface DeleteRefreshTokenRequest {
+  /**
+   * ID of the refresh token to delete.
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface GetRefreshTokenRequest {
+  /**
+   * ID refresh token to retrieve
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
 export interface DeleteResourceServersByIdRequest {
   /**
    * ID or the audience of the resource server to delete.
@@ -13922,12 +18405,17 @@ export interface DeleteResourceServersByIdRequest {
  */
 export interface GetResourceServersRequest {
   /**
+   * A list of URI encoded identifiers to filter the results by. Consider URL limits when using this parameter, if the URL is too long, consider chunking the requests
+   *
+   */
+  identifiers?: Array<string>;
+  /**
    * Page index of the results to return. First page is 0.
    *
    */
   page?: number;
   /**
-   * Number of results per page. Paging is disabled if parameter not sent.
+   * Number of results per page.
    *
    */
   per_page?: number;
@@ -14210,6 +18698,66 @@ export interface PutRulesConfigsByKeyOperationRequest {
 /**
  *
  */
+export interface DeleteSelfServiceProfilesByIdRequest {
+  /**
+   * The id of the self-service profile to delete
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface GetSelfServiceProfilesByIdRequest {
+  /**
+   * The id of the self-service profile to retrieve
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface PatchSelfServiceProfilesByIdRequest {
+  /**
+   * The id of the self-service profile to update
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface PostSsoTicketRequest {
+  /**
+   * The id of the sso-profile to retrieve
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface DeleteSessionRequest {
+  /**
+   * ID of the session to delete.
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
+export interface GetSessionRequest {
+  /**
+   * ID of session to retrieve
+   *
+   */
+  id: string;
+}
+/**
+ *
+ */
 export interface GetDailyRequest {
   /**
    * Optional first day of the date range (inclusive) in YYYYMMDD format.
@@ -14363,6 +18911,26 @@ export interface DeletePermissionsOperationRequest {
    *
    */
   id: string;
+}
+/**
+ *
+ */
+export interface DeleteRefreshTokensForUserRequest {
+  /**
+   * ID of the user to get remove refresh tokens for
+   *
+   */
+  user_id: string;
+}
+/**
+ *
+ */
+export interface DeleteSessionsForUserRequest {
+  /**
+   * ID of the user to get sessions for
+   *
+   */
+  user_id: string;
 }
 
 /**
@@ -14578,6 +19146,56 @@ export interface GetPermissionsRequest {
    *
    */
   include_totals?: boolean;
+}
+/**
+ *
+ */
+export interface GetRefreshTokensForUserRequest {
+  /**
+   * ID of the user to get refresh tokens for
+   *
+   */
+  user_id: string;
+  /**
+   * Return results inside an object that contains the total result count (true) or as a direct array of results (false, default).
+   *
+   */
+  include_totals?: boolean;
+  /**
+   * Optional token ID from which to start selection (exclusive).
+   *
+   */
+  from?: string;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  take?: number;
+}
+/**
+ *
+ */
+export interface GetSessionsForUserRequest {
+  /**
+   * ID of the user to get sessions for
+   *
+   */
+  user_id: string;
+  /**
+   * Return results inside an object that contains the total result count (true) or as a direct array of results (false, default).
+   *
+   */
+  include_totals?: boolean;
+  /**
+   * Optional session ID from which to start selection (exclusive).
+   *
+   */
+  from?: string;
+  /**
+   * Number of results per page. Defaults to 50.
+   *
+   */
+  take?: number;
 }
 /**
  *

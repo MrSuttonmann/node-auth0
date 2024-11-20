@@ -2,21 +2,28 @@ import nock from 'nock';
 
 const API_URL = 'https://tenant.auth0.com/api/v2';
 
-import { OrganizationsManager, ManagementClient, RequiredError } from '../../src/index.js';
+import {
+  OrganizationsManager,
+  ManagementClient,
+  RequiredError,
+  GetOrganizationClientGrantsRequest,
+  GetOrganizationClientGrants200Response,
+  ApiResponse,
+  DeleteClientGrantsByGrantIdRequest,
+  GetOrganizationClientGrants200ResponseOneOfInner,
+} from '../../src/index.js';
+
+import { checkMethod } from '../utils/index.js';
 
 describe('OrganizationsManager', () => {
-  let organizations: OrganizationsManager;
-
   let request: nock.Scope;
   const token = 'TOKEN';
 
-  beforeAll(() => {
-    const client = new ManagementClient({
-      domain: 'tenant.auth0.com',
-      token: token,
-    });
-    organizations = client.organizations;
+  const client = new ManagementClient({
+    domain: 'tenant.auth0.com',
+    token: token,
   });
+  const organizations: OrganizationsManager = client.organizations;
 
   describe('#constructor', () => {
     it('should throw an error when no base URL is provided', () => {
@@ -430,6 +437,7 @@ describe('OrganizationsManager', () => {
       id: 'org_id',
       connectionId: 'conn_id',
       show_as_button: false,
+      is_signup_enabled: true,
     };
 
     beforeEach(() => {
@@ -485,7 +493,12 @@ describe('OrganizationsManager', () => {
       id: 'org_123',
     };
 
-    const body = { connection_id: '123', assign_membership_on_login: false, show_as_button: false };
+    const body = {
+      connection_id: '123',
+      assign_membership_on_login: false,
+      show_as_button: false,
+      is_signup_enabled: true,
+    };
 
     beforeEach(() => {
       request = nock(API_URL).post(`/organizations/${data.id}/enabled_connections`).reply(200, {});
@@ -553,6 +566,7 @@ describe('OrganizationsManager', () => {
       id: 'org_123',
       connectionId: '123',
       show_as_button: false,
+      is_signup_enabled: true,
     };
     const body = { assign_membership_on_login: false };
 
@@ -1378,5 +1392,117 @@ describe('OrganizationsManager', () => {
         done();
       });
     });
+  });
+
+  describe('#getOrganizationClientGrants', () => {
+    const token = 'test_token';
+
+    const data: GetOrganizationClientGrantsRequest | any = {
+      id: 'org_123',
+      audience: 'audience',
+      client_id: 'client_id',
+      grant_ids: ['grant_id1', 'grant_id2'],
+      page: 1,
+      per_page: 10,
+      include_totals: true,
+    };
+
+    beforeEach(() => {
+      request = nock(API_URL)
+        .get(`/organizations/${data.id}/client-grants`)
+        .query({
+          audience: data.audience,
+          client_id: data.client_id,
+          grant_ids: data.grant_ids,
+          page: data.page,
+          per_page: data.per_page,
+          include_totals: data.include_totals,
+        })
+        .reply(200, { grants: [] });
+    });
+
+    afterEach(() => {
+      nock.cleanAll();
+    });
+
+    it('should return a promise if no callback is given', async () => {
+      const promise = organizations.getOrganizationClientGrants(data);
+      expect(promise).toBeInstanceOf(Promise);
+      await promise;
+    });
+
+    it('should perform a GET request to /api/v2/organizations/:id/client-grants', async () => {
+      await organizations.getOrganizationClientGrants(data);
+      expect(request.isDone()).toBe(true);
+    });
+
+    it('should include the token in the Authorization header', async () => {
+      nock(API_URL, {
+        reqheaders: {
+          authorization: `Bearer ${token}`,
+        },
+      })
+        .get(`/organizations/${data.id}/client-grants`)
+        .query({
+          audience: data.audience,
+          client_id: data.client_id,
+          grant_ids: data.grant_ids,
+          page: data.page,
+          per_page: data.per_page,
+          include_totals: data.include_totals,
+        })
+        .reply(200, { grants: [] });
+
+      const result: ApiResponse<GetOrganizationClientGrants200Response> =
+        await organizations.getOrganizationClientGrants(data);
+      expect(result.status).toBe(200);
+    });
+
+    it('should pass the query parameters correctly', async () => {
+      await organizations.getOrganizationClientGrants(data);
+      expect(request.isDone()).toBe(true);
+    });
+
+    it('should pass any errors to the promise catch handler', async () => {
+      request = nock(API_URL)
+        .get(`/organizations/${data.id}/client-grants`)
+        .query(true)
+        .reply(500, {});
+
+      organizations.getOrganizationClientGrants(data).catch((err) => {
+        expect(err).toBeDefined();
+      });
+    });
+  });
+
+  describe('#deleteClientGrantsById', () => {
+    const requestParameters: DeleteClientGrantsByGrantIdRequest = {
+      id: 'org_123',
+      grant_id: 'grant_id',
+    };
+    const operation = organizations.deleteClientGrantsByGrantId(requestParameters);
+    const expectedResponse = undefined;
+    const uri = `/organizations/{id}/client-grants/{grant_id}`
+      .replace('{id}', encodeURIComponent(String(requestParameters.id)))
+      .replace('{grant_id}', encodeURIComponent(String(requestParameters.grant_id)));
+    const method = 'delete';
+
+    checkMethod({ operation, expectedResponse, uri, method });
+  });
+
+  describe('#postOrganizationClientGrants', () => {
+    const requestParameters = { id: 'org_123' };
+    const requestBody = { grant_id: 'grant_id' };
+    const operation = organizations.postOrganizationClientGrants(requestParameters, requestBody);
+    const expectedResponse: GetOrganizationClientGrants200ResponseOneOfInner = <
+      GetOrganizationClientGrants200ResponseOneOfInner
+    >{};
+    const uri = `/organizations/{id}/client-grants`.replace(
+      '{id}',
+      encodeURIComponent(String(requestParameters.id))
+    );
+    const method = 'post';
+
+    checkMethod({ operation, expectedResponse, uri, method, requestBody });
   });
 });
